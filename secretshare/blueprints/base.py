@@ -1,15 +1,20 @@
 import flask
 from flask.views import MethodView
 from secretshare import exceptions
-from secretshare.domain.share.session import ShareSession
+from secretshare.domain.session.master import ShareSessionMaster
+from secretshare.domain.session.session import ShareSession
 
 
 bp = flask.Blueprint('session', __name__)
 
 
 class SessionShareView(MethodView):
+    def _parse_post_request(self, values):
+        if not values or not values.get('masterkey') or not values.get('alias'):
+            raise exceptions.WrongParametersException
+        return values
+
     def get(self, session_id):
-        print('session_id: {}'.format(session_id))
         if not session_id:
             raise exceptions.WrongParametersException
         session = ShareSession.get(session_id)
@@ -35,13 +40,12 @@ class SessionShareView(MethodView):
         )
 
     def post(self):
-        data = flask.request.json
-        if not data:
-            raise exceptions.WrongParametersException
-        session = ShareSession().store()
+        params = self._parse_post_request(flask.request.values)
+        master = ShareSessionMaster(masterkey=params['masterkey'], alias=params['alias'])
+        session = ShareSession(master=master).store()
         return flask.jsonify(
             {
-                "session": session.to_dict()
+                "session": session.to_api(auth=params['masterkey'])
             }
         )
 

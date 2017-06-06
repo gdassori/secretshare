@@ -17,3 +17,5 @@ rm -rf venv
 virtualenv -p python3.4 venv
 . venv/bin/activate
 pip install -r requirements.txt
+
+python -m unittest
