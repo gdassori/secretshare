@@ -1,16 +1,22 @@
-from uuid import UUID
+from uuid import UUID, uuid4
 from secretshare.domain import DomainObject
 from secretshare.domain.session.master import ShareSessionMaster
 from secretshare.ioc import secret_share_repository
 
 
 class ShareSession(DomainObject):
-    def __init__(self, master: ShareSessionMaster=None, repo=secret_share_repository):
+    def __init__(self, master: ShareSessionMaster=None, alias=None, repo=secret_share_repository):
         self._repo = repo
         self._master = master
         self._uuid = None
         self._users = []
         self._secret = None
+        self._alias = alias
+
+    @classmethod
+    def new(cls, master=None, alias=None, repo=secret_share_repository):
+        i = cls(master=master, alias=alias, repo=repo)
+        return i
 
     @property
     def master(self):

@@ -1,6 +1,6 @@
 from flask import Flask, Response
 from secretshare import settings, exceptions
-from secretshare.blueprints.base import bp as base_bp
+from secretshare.blueprints.session import bp as base_bp
 
 app = Flask(__name__)
 

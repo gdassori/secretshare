@@ -1,3 +1,4 @@
+import uuid
 from uuid import UUID
 
 from secretshare.domain import DomainObject
@@ -7,6 +8,11 @@ class ShareSessionMaster(DomainObject):
     def __init__(self, masterkey: UUID=None, alias: str=None):
         self._uuid = masterkey
         self._alias = alias
+
+    @classmethod
+    def new(cls, alias=None):
+        i = cls(masterkey=str(uuid.uuid4()), alias=alias)
+        return i
 
     def store(self):
         raise NotImplementedError
