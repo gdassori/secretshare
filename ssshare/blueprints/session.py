@@ -1,9 +1,9 @@
 import flask
 from flask.views import MethodView
-from secretshare import exceptions, settings
-from secretshare.blueprints import combinators
-from secretshare.domain.master import ShareSessionMaster
-from secretshare.domain.session import ShareSession
+from ssshare import exceptions, settings
+from ssshare.blueprints import combinators
+from ssshare.domain.master import ShareSessionMaster
+from ssshare.domain.session import ShareSession
 
 bp = flask.Blueprint('session', __name__)
 

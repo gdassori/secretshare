@@ -1,9 +1,9 @@
 from uuid import uuid4
-from secretshare import exceptions
-from secretshare.repository.abstract import SecretShareRepository
+from ssshare import exceptions
+from ssshare.repository.abstract import Repository
 
 
-class SecretShareMemoryRepository(SecretShareRepository):
+class VolatileRepository(Repository):
     def __init__(self, storage):
         self._storage = storage
 

@@ -3,5 +3,5 @@ import sys
 sys.path.insert(0, '.')
 
 if __name__ == '__main__':
-    from secretshare.app import app
+    from ssshare.app import app
     app.run()

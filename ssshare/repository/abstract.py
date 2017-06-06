@@ -1,7 +1,7 @@
 import abc
 
 
-class SecretShareRepository(metaclass=abc.ABCMeta):
+class Repository(metaclass=abc.ABCMeta):
 
     def get_session(self, data: dict) -> dict:
         pass

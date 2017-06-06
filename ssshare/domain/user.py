@@ -1,5 +1,5 @@
 from uuid import UUID
-from secretshare.domain import DomainObject
+from ssshare.domain import DomainObject
 
 
 class ShareSessionUser(DomainObject):

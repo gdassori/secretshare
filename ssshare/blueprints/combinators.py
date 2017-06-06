@@ -1,10 +1,9 @@
 import functools
-from pycomb import combinators
 from uuid import UUID
 import flask
+from pycomb import combinators
 from pycomb.exceptions import PyCombValidationError
-
-from secretshare import exceptions
+from ssshare import exceptions
 
 
 def is_uuid(value):

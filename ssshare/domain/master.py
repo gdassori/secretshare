@@ -1,6 +1,6 @@
 import uuid
 from uuid import UUID
-from secretshare.domain.user import ShareSessionUser
+from ssshare.domain.user import ShareSessionUser
 
 
 class ShareSessionMaster(ShareSessionUser):

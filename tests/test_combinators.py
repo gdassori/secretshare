@@ -1,6 +1,6 @@
 from unittest import TestCase
 from pycomb.exceptions import PyCombValidationError
-from secretshare.blueprints import combinators
+from ssshare.blueprints import combinators
 
 
 class TestCombinators(TestCase):

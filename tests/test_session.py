@@ -1,5 +1,5 @@
 from tests import MainTestClass
-from secretshare.blueprints.combinators import is_uuid
+from ssshare.blueprints.combinators import is_uuid
 
 
 class TestSession(MainTestClass):

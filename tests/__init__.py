@@ -1,4 +1,4 @@
-from secretshare.app import app
+from ssshare.app import app
 from flask_testing import TestCase
 
 

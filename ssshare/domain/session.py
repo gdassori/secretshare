@@ -1,10 +1,10 @@
 import time
 from uuid import UUID
 
-from secretshare import exceptions, settings
-from secretshare.domain import DomainObject
-from secretshare.domain.master import ShareSessionMaster
-from secretshare.ioc import secret_share_repository
+from ssshare import exceptions, settings
+from ssshare.domain import DomainObject
+from ssshare.domain.master import ShareSessionMaster
+from ssshare.ioc import secret_share_repository
 
 
 class ShareSession(DomainObject):
@@ -45,7 +45,7 @@ class ShareSession(DomainObject):
 
     @classmethod
     def from_dict(cls, data: dict, repo=secret_share_repository) -> 'ShareSession':
-        from secretshare.domain.master import ShareSessionMaster
+        from ssshare.domain.master import ShareSessionMaster
         i = cls(repo=repo)
         i._uuid = data['uuid']
         i._master = data.get('master') and ShareSessionMaster.from_dict(data['master'])
