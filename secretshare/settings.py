@@ -4,3 +4,5 @@ FXC_API_URL = NotImplementedError
 
 LISTEN_HOSTNAME = 'localhost'
 LISTEN_PORT = 5000
+
+SESSION_TTL = 600

@@ -1,6 +1,9 @@
-from uuid import UUID, uuid4
+import time
+from uuid import UUID
+
+from secretshare import exceptions, settings
 from secretshare.domain import DomainObject
-from secretshare.domain.session.master import ShareSessionMaster
+from secretshare.domain.master import ShareSessionMaster
 from secretshare.ioc import secret_share_repository
 
 
@@ -12,6 +15,9 @@ class ShareSession(DomainObject):
         self._users = []
         self._secret = None
         self._alias = alias
+        self._last_update = None
+        self._session_ttl = settings.SESSION_TTL
+
 
     @classmethod
     def new(cls, master=None, alias=None, repo=secret_share_repository):
@@ -21,6 +27,13 @@ class ShareSession(DomainObject):
     @property
     def master(self):
         return self._master
+
+    @property
+    def ttl(self):
+        if not self._last_update:
+            raise exceptions.SystemException('the object must be stored first')
+        rem = self._session_ttl - (int(time.time()) - self._last_update)
+        return self._session_ttl if self._session_ttl == -1 else rem > 0 and rem or 0
 
     def get(self) -> 'ShareSession':
         pass
@@ -33,7 +46,7 @@ class ShareSession(DomainObject):
 
     @classmethod
     def from_dict(cls, data: dict, repo=secret_share_repository) -> 'ShareSession':
-        from secretshare.domain.session.master import ShareSessionMaster
+        from secretshare.domain.master import ShareSessionMaster
         i = cls(repo=repo)
         i._uuid = data['uuid']
         i._master = data.get('master') and ShareSessionMaster.from_dict(data['master'])
@@ -46,11 +59,13 @@ class ShareSession(DomainObject):
     def store(self) -> 'ShareSession':
         assert not self._uuid
         self._repo.store_session(self.to_dict())
+        self._last_update = int(time.time())
         return self
 
     def update(self) -> 'ShareSession':
         assert self._uuid
         self._repo.update_session(self.to_dict())
+        self._last_update = int(time.time())
         return self
 
     def delete(self) -> bool:
@@ -60,9 +75,11 @@ class ShareSession(DomainObject):
 
     def to_api(self, auth=None):
         res = {
-            'users': [user.to_api(auth=auth) for user in self._users],
+            'ttl': self.ttl,
+            'users': [self.master.to_api(auth=auth)] +
+                     [user.to_api(auth=auth) for user in self._users],
             'secret_sha256': self._secret and self._secret.sha256,
-            'owner': self.master.alias
+            'alias': self._alias
         }
         if auth and self.master and auth == str(self.master.uuid):
             res['secret'] = self._secret and self._secret.value

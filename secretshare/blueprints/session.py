@@ -1,15 +1,17 @@
 import flask
 from flask.views import MethodView
+
 from secretshare import exceptions, settings
 from secretshare.blueprints import combinators
-from secretshare.domain.session.master import ShareSessionMaster
-from secretshare.domain.session.session import ShareSession
-
+from secretshare.domain.master import ShareSessionMaster
+from secretshare.domain.session import ShareSession
 
 bp = flask.Blueprint('session', __name__)
 
 
 class SessionShareView(MethodView):
+    @combinators.validate(combinators.ShareSessionGetCombinator,
+                          silent=not settings.DEBUG)
     def get(self, session_id):
         if not session_id:
             raise exceptions.WrongParametersException

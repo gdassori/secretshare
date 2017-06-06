@@ -1,6 +1,5 @@
-from secretshare.blueprints.combinators import is_uuid
 from tests import MainTestClass
-import uuid
+from secretshare.blueprints.combinators import is_uuid
 
 
 class TestSession(MainTestClass):
@@ -19,12 +18,20 @@ class TestSession(MainTestClass):
         self.assert200(response)
         session_id = is_uuid(response.json['session_id'])
         self.assertEqual(
-            {'session':
-                 {'secret': None,
-                  'owner': 'the session master',
-                  'users': [],
-                  'secret_sha256': None},
-             'session_id': session_id
+            {
+                'session': {
+                    'secret': None,
+                    'users': [
+                        {
+                            'alias': 'the session master',
+                            'role': 'master'
+                        }
+                    ],
+                    'secret_sha256': None,
+                    'ttl': 600,
+                    'alias': 'the session alias'
+                },
+                'session_id': session_id,
              },
             response.json
         )

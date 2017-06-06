@@ -44,6 +44,12 @@ ShareSessionCreateCombinator = combinators.struct(
     }
 )
 
+ShareSessionGetCombinator = combinators.struct(
+    {
+        "user_key": UUIDCombinator
+    }
+)
+
 ShareSessionJoinCombinator = combinators.struct(
     {
         "user_alias": combinators.String,

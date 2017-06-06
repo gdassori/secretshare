@@ -1,17 +1,17 @@
 import uuid
 from uuid import UUID
+from secretshare.domain.user import ShareSessionUser
 
-from secretshare.domain import DomainObject
 
+class ShareSessionMaster(ShareSessionUser):
+    ROLE='master'
 
-class ShareSessionMaster(DomainObject):
-    def __init__(self, masterkey: UUID=None, alias: str=None):
-        self._uuid = masterkey
-        self._alias = alias
+    def __init__(self, user_id: UUID=None, alias: str=None):
+        super().__init__(user_id=user_id, alias=alias)
 
     @classmethod
     def new(cls, alias=None):
-        i = cls(masterkey=str(uuid.uuid4()), alias=alias)
+        i = cls(user_id=str(uuid.uuid4()), alias=alias)
         return i
 
     def store(self):
@@ -40,3 +40,12 @@ class ShareSessionMaster(DomainObject):
         i._uuid = UUID(data['uuid'])
         i._alias = data['alias']
         return i
+
+    def to_api(self, auth=None):
+        res = dict(
+            alias=self._alias,
+            role=self.ROLE
+        )
+        if auth:
+            pass
+        return res

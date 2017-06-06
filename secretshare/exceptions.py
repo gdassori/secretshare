@@ -8,3 +8,7 @@ class DomainObjectNotFoundException(Exception):
 
 class WrongParametersException(Exception):
     pass
+
+
+class SystemException(Exception):
+    pass
