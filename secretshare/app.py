@@ -18,7 +18,7 @@ def wrong_parameters_error(_):
 
 
 @app.errorhandler(exceptions.DomainObjectNotFoundException)
-def wrong_parameters_error(_):
+def domain_object_not_found_error(_):
     return Response(status=404)
 
 
