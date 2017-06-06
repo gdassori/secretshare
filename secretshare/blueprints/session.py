@@ -1,6 +1,5 @@
 import flask
 from flask.views import MethodView
-
 from secretshare import exceptions, settings
 from secretshare.blueprints import combinators
 from secretshare.domain.master import ShareSessionMaster
@@ -37,15 +36,14 @@ class SessionShareView(MethodView):
     @combinators.validate(combinators.ShareSessionCreateCombinator, silent=not settings.DEBUG)
     def post(self):
         params = flask.request.values
-        master = ShareSessionMaster.new(alias=params['user_alias'])
-        session = ShareSession.new(master=master, alias=params['session_alias']).store()
+        user = ShareSessionMaster.new(alias=params['user_alias'])
+        session = ShareSession.new(master=user, alias=params['session_alias']).store()
         return flask.jsonify(
             {
-                "session": session.to_api(auth=master.uuid),
+                "session": session.to_api(auth=user.uuid),
                 "session_id": session.uuid
             }
         )
-
 
     def delete(self, session_id):
         data = flask.request.json

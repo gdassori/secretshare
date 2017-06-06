@@ -18,7 +18,6 @@ class ShareSession(DomainObject):
         self._last_update = None
         self._session_ttl = settings.SESSION_TTL
 
-
     @classmethod
     def new(cls, master=None, alias=None, repo=secret_share_repository):
         i = cls(master=master, alias=alias, repo=repo)

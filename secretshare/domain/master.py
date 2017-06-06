@@ -14,12 +14,6 @@ class ShareSessionMaster(ShareSessionUser):
         i = cls(user_id=str(uuid.uuid4()), alias=alias)
         return i
 
-    def store(self):
-        raise NotImplementedError
-
-    def update(self):
-        raise NotImplementedError
-
     @property
     def uuid(self):
         return self._uuid
