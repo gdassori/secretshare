@@ -9,17 +9,29 @@ bp = flask.Blueprint('session', __name__)
 
 
 class SessionShareView(MethodView):
-    @combinators.validate(combinators.ShareSessionGetCombinator,
-                          silent=not settings.DEBUG)
+    @combinators.validate(combinators.ShareSessionCreateCombinator, silent=not settings.DEBUG)
+    def post(self):
+        params = flask.request.values
+        user = ShareSessionMaster.new(alias=params['user_alias'])
+        session = ShareSession.new(master=user, alias=params['session_alias']).store()
+        return flask.jsonify(
+            {
+                "session": session.to_api(auth=user.uuid),
+                "session_id": session.uuid
+            }
+        )
+
+    @combinators.validate(combinators.ShareSessionGetCombinator, silent=not settings.DEBUG)
     def get(self, session_id):
-        if not session_id:
-            raise exceptions.WrongParametersException
-        session = ShareSession.get(session_id)
+        session = ShareSession.get(session_id, auth=flask.request.values['auth'])
+        if not session.ttl:
+            raise exceptions.DomainObjectExpiredException
         if not session:
             raise exceptions.DomainObjectNotFoundException
         return flask.jsonify(
             {
-                "session": session.to_dict()
+                "session": session.to_api(auth=flask.request.values['auth']),
+                "session_id": session.uuid
             }
         )
 
@@ -30,18 +42,6 @@ class SessionShareView(MethodView):
         return flask.jsonify(
             {
                 "session": session.to_dict()
-            }
-        )
-
-    @combinators.validate(combinators.ShareSessionCreateCombinator, silent=not settings.DEBUG)
-    def post(self):
-        params = flask.request.values
-        user = ShareSessionMaster.new(alias=params['user_alias'])
-        session = ShareSession.new(master=user, alias=params['session_alias']).store()
-        return flask.jsonify(
-            {
-                "session": session.to_api(auth=user.uuid),
-                "session_id": session.uuid
             }
         )
 

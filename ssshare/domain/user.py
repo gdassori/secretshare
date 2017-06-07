@@ -9,7 +9,6 @@ class ShareSessionUser(DomainObject):
         self._uuid = user_id
         self._alias = alias
 
-
     @property
     def uuid(self):
         return self._uuid
@@ -30,3 +29,12 @@ class ShareSessionUser(DomainObject):
         i._uuid = UUID(data['uuid'])
         i._alias = data['alias']
         return i
+
+    def to_api(self, auth=None):
+        res = dict(
+            alias=self._alias,
+            role=self.ROLE
+        )
+        if auth:
+            res['key'] = str(self.uuid)
+        return res

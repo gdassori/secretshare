@@ -34,12 +34,3 @@ class ShareSessionMaster(ShareSessionUser):
         i._uuid = UUID(data['uuid'])
         i._alias = data['alias']
         return i
-
-    def to_api(self, auth=None):
-        res = dict(
-            alias=self._alias,
-            role=self.ROLE
-        )
-        if auth:
-            pass
-        return res

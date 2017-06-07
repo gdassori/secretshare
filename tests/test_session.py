@@ -16,7 +16,8 @@ class TestSession(MainTestClass):
         }
         response = self.client.post('/session', data=payload)
         self.assert200(response)
-        session_id = is_uuid(response.json['session_id'])
+        self.assertTrue(is_uuid(response.json['session_id']))
+        self.assertTrue(is_uuid(response.json['session']['users'][0]['key']))
         self.assertEqual(
             {
                 'session': {
@@ -24,14 +25,23 @@ class TestSession(MainTestClass):
                     'users': [
                         {
                             'alias': 'the session master',
-                            'role': 'master'
+                            'role': 'master',
+                            'key': response.json['session']['users'][0]['key']
                         }
                     ],
                     'secret_sha256': None,
                     'ttl': 600,
                     'alias': 'the session alias'
                 },
-                'session_id': session_id,
+                'session_id': response.json['session_id']
              },
             response.json
         )
+        return response.json
+
+    def test_get_session(self):
+        jsonresponse = self.test_create_session()
+        print('TestSession: Getting session')
+        session_id, user_key = jsonresponse['session_id'], jsonresponse['session']['users'][0]['key']
+        response = self.client.get('/session/%s?auth=%s' % (session_id, user_key))
+        self.assertEqual(response.json, jsonresponse)

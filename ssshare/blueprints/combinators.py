@@ -8,9 +8,9 @@ from ssshare import exceptions
 
 def is_uuid(value):
     try:
+        assert value
         return UUID(value)
-    except (TypeError, ValueError):
-        print('not uuid: {}'.format(value))
+    except (TypeError, ValueError, AssertionError):
         return
 
 
@@ -18,7 +18,7 @@ def validate(validation_class, silent=True):
     def decorator(fun):
         @functools.wraps(fun)
         def wrapper(*a, **kw):
-            p = {k:v for k, v in flask.request.values.items()}
+            p = {k:v for k, v in flask.request.values and flask.request.values.items() or {}}
             if silent:
                 try:
                     validation_class(p)
@@ -45,7 +45,7 @@ ShareSessionCreateCombinator = combinators.struct(
 
 ShareSessionGetCombinator = combinators.struct(
     {
-        "user_key": UUIDCombinator
+        "auth": UUIDCombinator
     }
 )
 
