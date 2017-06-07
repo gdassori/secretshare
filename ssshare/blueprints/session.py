@@ -11,9 +11,8 @@ bp = flask.Blueprint('session', __name__)
 class SessionShareView(MethodView):
     @combinators.validate(combinators.ShareSessionCreateCombinator, silent=not settings.DEBUG)
     def post(self):
-        params = flask.request.values
-        user = ShareSessionMaster.new(alias=params['user_alias'])
-        session = ShareSession.new(master=user, alias=params['session_alias']).store()
+        user = ShareSessionMaster.new(alias=flask.request.values['user_alias'])
+        session = ShareSession.new(master=user, alias=flask.request.values['session_alias']).store()
         return flask.jsonify(
             {
                 "session": session.to_api(auth=user.uuid),
@@ -24,10 +23,10 @@ class SessionShareView(MethodView):
     @combinators.validate(combinators.ShareSessionGetCombinator, silent=not settings.DEBUG)
     def get(self, session_id):
         session = ShareSession.get(session_id, auth=flask.request.values['auth'])
-        if not session.ttl:
-            raise exceptions.DomainObjectExpiredException
         if not session:
             raise exceptions.DomainObjectNotFoundException
+        if not session.ttl:
+            raise exceptions.DomainObjectExpiredException
         return flask.jsonify(
             {
                 "session": session.to_api(auth=flask.request.values['auth']),

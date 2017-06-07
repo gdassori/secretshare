@@ -1,4 +1,6 @@
 from flask import Flask, Response
+from pycomb.exceptions import PyCombValidationError
+
 from ssshare import settings, exceptions
 from ssshare.blueprints.session import bp as base_bp
 
@@ -14,12 +16,29 @@ app.register_blueprint(base_bp, url_prefix='/session')
 
 @app.errorhandler(exceptions.WrongParametersException)
 def wrong_parameters_error(_):
-    return Response(status=400)
+    return Response(status=400, response='arguments')
+
+
+@app.errorhandler(PyCombValidationError)
+def validation_error(_):
+    return Response(status=400, response='values')
+
+
+@app.errorhandler(exceptions.ObjectDeniedException)
+def domain_object_request_not_authorized(_):
+    return Response(status=401)
 
 
 @app.errorhandler(exceptions.DomainObjectNotFoundException)
 def domain_object_not_found_error(_):
     return Response(status=404)
+
+
+@app.errorhandler(exceptions.DomainObjectExpiredException)
+def domain_object_expired_error(_):
+    return Response(status=410)
+
+
 
 
 if __name__ == '__main__':

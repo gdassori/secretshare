@@ -1,5 +1,4 @@
 from uuid import uuid4
-from ssshare import exceptions
 from ssshare.repository.abstract import Repository
 
 
@@ -9,9 +8,7 @@ class VolatileRepository(Repository):
 
     def get_session(self, session_id: str):
         data = self._storage.get(session_id)
-        if not data:
-            raise exceptions.ObjectNotFoundException
-        return data
+        return data or None
 
     def store_session(self, data: dict):
         session_id = str(uuid4())
