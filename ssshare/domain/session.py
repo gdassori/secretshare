@@ -1,9 +1,11 @@
 import time
+import uuid
 from uuid import UUID
 
 from ssshare import exceptions, settings
 from ssshare.domain import DomainObject
 from ssshare.domain.master import ShareSessionMaster
+from ssshare.domain.user import ShareSessionUser
 from ssshare.ioc import secret_share_repository
 
 
@@ -17,11 +19,16 @@ class ShareSession(DomainObject):
         self._alias = alias
         self._last_update = None
         self._session_ttl = settings.SESSION_TTL
+        self._current_user = None
 
     @classmethod
     def new(cls, master=None, alias=None, repo=secret_share_repository):
         i = cls(master=master, alias=alias, repo=repo)
         return i
+
+    @property
+    def users(self):
+        return list(self._users.values())
 
     @property
     def master(self):
@@ -35,12 +42,12 @@ class ShareSession(DomainObject):
         return self._session_ttl if self._session_ttl == -1 else rem > 0 and rem or 0
 
     @classmethod
-    def get(cls, session_id: str, auth: str, repo=secret_share_repository) -> 'ShareSession':
+    def get(cls, session_id: str, auth: str=None, repo=secret_share_repository) -> 'ShareSession':
         session = repo.get_session(session_id)
         if not session:
             raise exceptions.DomainObjectNotFoundException
         i = cls.from_dict(session, repo=repo)
-        if not i.get_user(auth):
+        if auth and not i.get_user(auth):
             raise exceptions.ObjectDeniedException
         return i
 
@@ -52,17 +59,20 @@ class ShareSession(DomainObject):
             uuid=self._uuid,
             master=self._master.to_dict(),
             last_update=self._last_update,
-            alias=self._alias
+            alias=self._alias,
+            users=[u.to_dict() for u in self.users]
         )
 
     @classmethod
     def from_dict(cls, data: dict, repo=secret_share_repository) -> 'ShareSession':
         from ssshare.domain.master import ShareSessionMaster
+        from ssshare.domain.user import ShareSessionUser
         i = cls(repo=repo)
         i._uuid = data['uuid']
-        i._master = data.get('master') and ShareSessionMaster.from_dict(data['master'])
+        i._master = data.get('master') and ShareSessionMaster.from_dict(data['master'], session=i)
         i._last_update = data['last_update']
         i._alias = data['alias']
+        i._users = {u['uuid']: ShareSessionUser.from_dict(u, session=i) for u in data['users']}
         return i
 
     @property
@@ -78,8 +88,8 @@ class ShareSession(DomainObject):
 
     def update(self) -> 'ShareSession':
         assert self._uuid
-        self._repo.update_session(self.to_dict())
         self._last_update = int(time.time())
+        self._repo.update_session(self.to_dict())
         return self
 
     def delete(self) -> bool:
@@ -88,8 +98,7 @@ class ShareSession(DomainObject):
         return True
 
     def to_api(self, auth=None):
-        users = [self.master.to_api(auth=auth)] + \
-                [user.to_api(auth=auth) for user in list(self._users.values())]
+        users = [self.master.to_api(auth=auth)] + [user.to_api(auth=auth) for user in self.users]
         res = {
             'ttl': self.ttl,
             'users': users,
@@ -99,3 +108,17 @@ class ShareSession(DomainObject):
         if auth and self.master and auth == str(self.master.uuid):
             res['secret'] = self._secret and self._secret.value
         return res
+
+    def _get_users_aliases(self) -> dict:
+        return {
+            user.alias: [user.ROLE, user_id] for user_id, user in self._users.items()
+        }
+
+    def join(self, alias: str):
+        users = self._get_users_aliases()
+        if alias in users:
+            raise exceptions.ObjectDeniedException
+
+        user = ShareSessionUser(user_id=uuid.uuid4(), alias=alias)
+        self._users[str(user.uuid)] = user
+        return user

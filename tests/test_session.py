@@ -6,12 +6,11 @@ from ssshare.blueprints.combinators import is_uuid
 
 class TestSession(MainTestClass):
     def setUp(self):
-        print('Initialized TestSession')
         self.master_alias = 'the session master'
         self.session_alias = 'the session alias'
 
     def test_create_session(self):
-        print('TestSession: create session')
+        print('TestSession: a master create a session')
         payload = {
             "user_alias": self.master_alias,
             "session_alias": self.session_alias
@@ -20,6 +19,7 @@ class TestSession(MainTestClass):
         self.assert200(response)
         self.assertTrue(is_uuid(response.json['session_id']))
         self.assertTrue(is_uuid(response.json['session']['users'][0]['key']))
+        self._masterkey = response.json['session']['users'][0]['key']
         self.assertEqual(
             {
                 'session': {
@@ -28,7 +28,7 @@ class TestSession(MainTestClass):
                         {
                             'alias': 'the session master',
                             'role': 'master',
-                            'key': response.json['session']['users'][0]['key']
+                            'key': self._masterkey
                         }
                     ],
                     'secret_sha256': None,
@@ -43,32 +43,76 @@ class TestSession(MainTestClass):
 
     def test_get_session(self):
         jsonresponse = self.test_create_session()
-        print('TestSession: get session')
+        print('TestSession: a master get a created session')
         session_id, user_key = jsonresponse['session_id'], jsonresponse['session']['users'][0]['key']
         response = self.client.get('/session/%s?auth=%s' % (session_id, user_key))
         self.assertEqual(response.json, jsonresponse)
 
     def test_get_session_404_no_session(self):
-        print('TestSession: get a non existent session')
+        print('TestSession: a get happen on a non existent session')
         response = self.client.get('/session/%s?auth=%s' % (str(uuid.uuid4()), str(uuid.uuid4())))
         self.assert404(response)
 
     def test_get_session_401_no_auth(self):
         jsonresponse = self.test_create_session()
-        print('TestSession: get session without auth rights')
+        print('TestSession: a get happen on a good session, but without rights')
         session_id, _ = jsonresponse['session_id'], jsonresponse['session']['users'][0]['key']
         response = self.client.get('/session/%s?auth=%s' % (session_id, str(uuid.uuid4())))
         self.assert401(response)
 
     def test_get_session_410_expired(self):
         jsonresponse = self.test_create_session()
-        print('TestSession: get an expired session')
+        print('TestSession: someone get an expired session')
         session_id, user_key = jsonresponse['session_id'], jsonresponse['session']['users'][0]['key']
 
+        # force session expiration
         from ssshare.ioc import secret_share_repository
         data = secret_share_repository.get_session(session_id)
-        data['last_update'] = 1
+        data['last_update'] = 1 # epoch based, last update in the shiny 70s
         secret_share_repository.update_session(data)
 
         response = self.client.get('/session/%s?auth=%s' % (session_id, user_key))
         self.assertEqual(response.status_code, 410)
+
+    def test_join_session(self):
+        created_session = self.test_create_session()
+        print('TestSession: a user join a valid created session')
+        payload = {
+            'user_alias' : 'a shareholder'
+        }
+        response = self.client.put('/session/%s' % created_session['session_id'], data=payload)
+        self.assert200(response)
+        self.assertTrue(is_uuid(response.json['session_id']))
+        self.assertTrue(is_uuid(response.json['session']['users'][1]['key']))
+        session_id, user_key = response.json['session_id'], response.json['session']['users'][1]['key']
+        expected_response = {
+            'session': {
+                'users': [
+                    {'role': 'master', 'alias': 'the session master'},
+                    {'role': 'user', 'key': user_key, 'alias': 'a shareholder'}
+                ],
+                'ttl': 600,
+                'secret_sha256': None,
+                'alias': 'the session alias'
+            },
+            'session_id': session_id
+        }
+        self.assertEqual(expected_response, response.json)
+        return response.json
+
+    def test_master_get_user_joined_session(self):
+        joined_session = self.test_join_session()
+        print('TestSession: after a join, the master get the session and see the joined user')
+        response = self.client.get('/session/%s?auth=%s' % (joined_session['session_id'], self._masterkey))
+        self.assert200(response)
+        self.assertTrue(is_uuid(response.json['session_id']))
+        self.assertTrue(is_uuid(response.json['session']['users'][1]['key']))
+
+    def test_user_join_session_401_twice_join(self):
+        joined_session = self.test_join_session()
+        print('TestSession: a user is unable to join a session twice \ user alias is unique')
+        payload = {
+            'user_alias' : 'a shareholder'
+        }
+        response = self.client.put('/session/%s' % joined_session['session_id'], data=payload)
+        self.assert401(response)

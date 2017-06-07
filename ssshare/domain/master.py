@@ -1,13 +1,9 @@
 import uuid
-from uuid import UUID
 from ssshare.domain.user import ShareSessionUser
 
 
 class ShareSessionMaster(ShareSessionUser):
     ROLE='master'
-
-    def __init__(self, user_id: UUID=None, alias: str=None):
-        super().__init__(user_id=user_id, alias=alias)
 
     @classmethod
     def new(cls, alias=None):
@@ -27,10 +23,3 @@ class ShareSessionMaster(ShareSessionUser):
             uuid=str(self._uuid),
             alias=self._alias
         )
-
-    @classmethod
-    def from_dict(cls, data: dict) -> 'ShareSessionMaster':
-        i = cls()
-        i._uuid = UUID(data['uuid'])
-        i._alias = data['alias']
-        return i

@@ -18,7 +18,7 @@ class VolatileRepository(Repository):
         return data
 
     def update_session(self, data: dict):
-        data = self.get_session(data['uuid'])
+        assert self.get_session(data['uuid'])
         self._storage[data['uuid']] = data
         return data
 
