@@ -51,8 +51,9 @@ class ShareSession(DomainObject):
             raise exceptions.ObjectDeniedException
         return i
 
-    def get_user(self, user_id: str):
-        return UUID(user_id) == self.master.uuid and self.master or self._users.get(user_id, None)
+    def get_user(self, user_id: str, alias: str = None):
+        user = UUID(user_id) == self.master.uuid and self.master or self._users.get(user_id, None)
+        return alias is not None and user and user.alias == alias and user or user
 
     def to_dict(self) -> dict:
         return dict(
@@ -122,3 +123,7 @@ class ShareSession(DomainObject):
         user = ShareSessionUser(user_id=uuid.uuid4(), alias=alias)
         self._users[str(user.uuid)] = user
         return user
+
+    def set_from_payload(self, payload: dict):
+        from ssshare.domain.secret import Secret
+        self._secret = Secret.from_dict(payload['session']['secret'])

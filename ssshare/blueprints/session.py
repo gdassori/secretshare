@@ -41,8 +41,12 @@ class SessionShareView(MethodView):
         session = ShareSession.get(session_id)
         if not session:
             raise exceptions.DomainObjectNotFoundException
-        user = session.join(flask.request.values['user_alias'])
-        session.update()
+        user = not flask.request.values.get('user_auth') and session.join(flask.request.values['user_alias']) or \
+            session.get_user(flask.request.values['user_auth'], alias=str(flask.request.values['user_alias']))
+        if not user:
+            raise exceptions.ObjectDeniedException
+        if user.is_master:
+            session.set_from_payload(dict(flask.request.values)).is_changed and session.update()
         return flask.jsonify(
             {
                 "session": session.to_api(auth=str(user.uuid)),
@@ -50,25 +54,9 @@ class SessionShareView(MethodView):
             }
         )
 
-    def delete(self, session_id):
-        data = flask.request.json
-        if not all([data, session_id]):
-            raise exceptions.WrongParametersException
-        session = ShareSession.get(session_id)
-        if not session:
-            raise exceptions.DomainObjectNotFoundException
-        session.delete()
-        return flask.jsonify(
-            {
-                "success": True,
-                "session_id": str(session.uuid)
-            }
-        )
-
-
 bp.add_url_rule(
     '/<string:session_id>',
-    methods=['GET', 'PUT', 'DELETE', 'POST'],
+    methods=['GET', 'PUT', 'POST'],
     view_func=SessionShareView.as_view('get_or_edit_session')
 )
 

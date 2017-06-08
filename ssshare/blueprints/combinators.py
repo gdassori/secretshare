@@ -54,3 +54,4 @@ ShareSessionJoinCombinator = combinators.struct(
         "user_alias": combinators.String,
     }
 )
+
