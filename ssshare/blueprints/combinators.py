@@ -1,9 +1,10 @@
 import functools
 from uuid import UUID
 import flask
+from flask import json
 from pycomb import combinators
 from pycomb.exceptions import PyCombValidationError
-from ssshare import exceptions
+from ssshare import exceptions, settings
 
 
 def is_uuid(value):
@@ -14,11 +15,17 @@ def is_uuid(value):
         return
 
 
-def validate(validation_class, silent=True):
+def validate(validation_class, silent=not settings.DEBUG):
     def decorator(fun):
         @functools.wraps(fun)
         def wrapper(*a, **kw):
-            p = {k:v for k, v in flask.request.values and flask.request.values.items() or {}}
+            if flask.request.method == 'GET':
+                p = {k: v for k, v in flask.request.values and flask.request.values.items() or {}}
+            else:
+                try:
+                    p = flask.request.data and json.loads(flask.request.data.decode())
+                except Exception:
+                    raise exceptions.WrongParametersException
             if silent:
                 try:
                     validation_class(p)
@@ -26,7 +33,7 @@ def validate(validation_class, silent=True):
                     raise exceptions.WrongParametersException
             else:
                 validation_class(p)
-            return fun(*a, **kw)
+            return fun(*a, params=p, **kw)
         return wrapper
     return decorator
 
@@ -35,6 +42,25 @@ UUIDCombinator = combinators.subtype(
     combinators.String,
     is_uuid
 )
+
+ShareSessionDataCombinator = combinators.struct(
+    {
+        "secret": combinators.struct(
+            {
+                "secret": combinators.String,
+                "shares": combinators.Int,
+                "quorum": combinators.Int
+            }
+        )
+    }
+)
+
+ShareSessionCombinator = combinators.subtype(
+    ShareSessionDataCombinator,
+    lambda x: x['secret']['shares'] > x['secret']['quorum']
+)
+
+
 
 ShareSessionCreateCombinator = combinators.struct(
     {
@@ -49,9 +75,22 @@ ShareSessionGetCombinator = combinators.struct(
     }
 )
 
+
 ShareSessionJoinCombinator = combinators.struct(
     {
         "user_alias": combinators.String,
     }
 )
 
+ShareSessionMasterEditCombinator = combinators.struct(
+    {
+        "user_alias": combinators.String,
+        "auth": combinators.String,
+        "session": ShareSessionCombinator
+    }
+)
+
+ShareSessionEditCombinator = combinators.union(
+    ShareSessionJoinCombinator,
+    ShareSessionMasterEditCombinator
+)

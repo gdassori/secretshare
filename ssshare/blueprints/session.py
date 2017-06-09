@@ -9,10 +9,10 @@ bp = flask.Blueprint('session', __name__)
 
 
 class SessionCreateView(MethodView):
-    @combinators.validate(combinators.ShareSessionCreateCombinator, silent=not settings.DEBUG)
-    def post(self):
-        user = ShareSessionMaster.new(alias=flask.request.values['user_alias'])
-        session = ShareSession.new(master=user, alias=flask.request.values['session_alias']).store()
+    @combinators.validate(combinators.ShareSessionCreateCombinator)
+    def post(self, params=None):
+        user = ShareSessionMaster.new(alias=params['user_alias'])
+        session = ShareSession.new(master=user, alias=params['session_alias']).store()
         return flask.jsonify(
             {
                 "session": session.to_api(auth=user.uuid),
@@ -22,31 +22,35 @@ class SessionCreateView(MethodView):
 
 
 class SessionShareView(MethodView):
-    @combinators.validate(combinators.ShareSessionGetCombinator, silent=not settings.DEBUG)
-    def get(self, session_id):
-        session = ShareSession.get(session_id, auth=flask.request.values['auth'])
+    @combinators.validate(combinators.ShareSessionGetCombinator)
+    def get(self, session_id, params=None):
+        session = ShareSession.get(session_id, auth=params['auth'])
         if not session:
             raise exceptions.DomainObjectNotFoundException
         if not session.ttl:
             raise exceptions.DomainObjectExpiredException
         return flask.jsonify(
             {
-                "session": session.to_api(auth=flask.request.values['auth']),
+                "session": session.to_api(auth=params['auth']),
                 "session_id": str(session.uuid)
             }
         )
 
-    @combinators.validate(combinators.ShareSessionJoinCombinator, silent=not settings.DEBUG)
-    def put(self, session_id):
+    @combinators.validate(combinators.ShareSessionEditCombinator)
+    def put(self, session_id, params=None):
         session = ShareSession.get(session_id)
         if not session:
             raise exceptions.DomainObjectNotFoundException
-        user = not flask.request.values.get('user_auth') and session.join(flask.request.values['user_alias']) or \
-            session.get_user(flask.request.values['user_auth'], alias=str(flask.request.values['user_alias']))
+        if params.get('auth'):
+            user = session.get_user(params['auth'], alias=str(params['user_alias']))
+        else:
+            user = session.join(params['user_alias'])
         if not user:
             raise exceptions.ObjectDeniedException
+        print('user is {}'.format(user.to_dict()))
         if user.is_master:
-            session.set_from_payload(dict(flask.request.values)).is_changed and session.update()
+            session.set_from_payload(dict(params))
+        session.update()
         return flask.jsonify(
             {
                 "session": session.to_api(auth=str(user.uuid)),

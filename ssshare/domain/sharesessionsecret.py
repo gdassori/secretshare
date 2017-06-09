@@ -1,13 +1,19 @@
+from _sha256 import sha256
+
 from ssshare.domain import DomainObject
 from ssshare.domain.session import ShareSession
 
 
-class Secret(DomainObject):
+class ShareSessionSecret(DomainObject):
     def __init__(self, secret: str):
         self._session = None
         self._shares = None
         self._quorum = None
         self._secret = secret
+
+    @property
+    def uuid(self):
+        raise NotImplementedError
 
     @property
     def secret(self):
@@ -37,8 +43,12 @@ class Secret(DomainObject):
         )
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'Secret':
+    def from_dict(cls, data: dict) -> 'ShareSessionSecret':
         i = cls(data['secret'])
         i._quorum = data['quorum']
         i._shares = data['shares']
         return i
+
+    @property
+    def sha256(self):
+        return self._secret and sha256(self._secret.encode()).hexdigest()

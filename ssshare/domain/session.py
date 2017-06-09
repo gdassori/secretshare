@@ -61,19 +61,22 @@ class ShareSession(DomainObject):
             master=self._master.to_dict(),
             last_update=self._last_update,
             alias=self._alias,
-            users=[u.to_dict() for u in self.users]
+            users=[u.to_dict() for u in self.users],
+            secret=self._secret and self._secret.to_dict()
         )
 
     @classmethod
     def from_dict(cls, data: dict, repo=secret_share_repository) -> 'ShareSession':
         from ssshare.domain.master import ShareSessionMaster
         from ssshare.domain.user import ShareSessionUser
+        from ssshare.domain.sharesessionsecret import ShareSessionSecret
         i = cls(repo=repo)
         i._uuid = data['uuid']
         i._master = data.get('master') and ShareSessionMaster.from_dict(data['master'], session=i)
         i._last_update = data['last_update']
         i._alias = data['alias']
         i._users = {u['uuid']: ShareSessionUser.from_dict(u, session=i) for u in data['users']}
+        i._secret = data['secret'] and ShareSessionSecret.from_dict(data['secret'])
         return i
 
     @property
@@ -107,7 +110,7 @@ class ShareSession(DomainObject):
             'alias': self._alias
         }
         if auth and self.master and auth == str(self.master.uuid):
-            res['secret'] = self._secret and self._secret.value
+            res['secret'] = self._secret and self._secret.secret
         return res
 
     def _get_users_aliases(self) -> dict:
@@ -117,7 +120,7 @@ class ShareSession(DomainObject):
 
     def join(self, alias: str):
         users = self._get_users_aliases()
-        if alias in users:
+        if alias in users or alias == self.master.alias:
             raise exceptions.ObjectDeniedException
 
         user = ShareSessionUser(user_id=uuid.uuid4(), alias=alias)
@@ -125,5 +128,6 @@ class ShareSession(DomainObject):
         return user
 
     def set_from_payload(self, payload: dict):
-        from ssshare.domain.secret import Secret
-        self._secret = Secret.from_dict(payload['session']['secret'])
+        from ssshare.domain.sharesessionsecret import ShareSessionSecret
+        self._secret = ShareSessionSecret.from_dict(payload['session']['secret'])
+        return self._secret

@@ -11,6 +11,10 @@ class ShareSessionUser(DomainObject):
         self._session = session
 
     @property
+    def is_master(self):
+        return self.ROLE == 'master'
+
+    @property
     def uuid(self):
         return self._uuid
 

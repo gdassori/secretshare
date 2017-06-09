@@ -1,3 +1,4 @@
+import json
 import uuid
 
 from tests import MainTestClass
@@ -15,7 +16,7 @@ class TestSession(MainTestClass):
             "user_alias": self.master_alias,
             "session_alias": self.session_alias
         }
-        response = self.client.post('/session', data=payload)
+        response = self.client.post('/session', data=json.dumps(payload))
         self.assert200(response)
         self.assertTrue(is_uuid(response.json['session_id']))
         self.assertTrue(is_uuid(response.json['session']['users'][0]['key']))
@@ -80,7 +81,7 @@ class TestSession(MainTestClass):
         payload = {
             'user_alias' : 'a shareholder'
         }
-        response = self.client.put('/session/%s' % created_session['session_id'], data=payload)
+        response = self.client.put('/session/%s' % created_session['session_id'], data=json.dumps(payload))
         self.assert200(response)
         self.assertTrue(is_uuid(response.json['session_id']))
         self.assertTrue(is_uuid(response.json['session']['users'][1]['key']))
@@ -114,5 +115,73 @@ class TestSession(MainTestClass):
         payload = {
             'user_alias' : 'a shareholder'
         }
-        response = self.client.put('/session/%s' % joined_session['session_id'], data=payload)
+        response = self.client.put('/session/%s' % joined_session['session_id'], data=json.dumps(payload))
         self.assert401(response)
+
+    def test_master_put_secret_on_joined_session(self):
+        joined_session = self.test_join_session()
+        session_id = joined_session['session_id']
+        payload = {
+            'session': {
+                'secret': {
+                    'secret': 'my awesome secret',
+                    'shares': 3,
+                    'quorum': 2
+                }
+            },
+            'user_alias': self.master_alias,
+            'auth': self._masterkey
+        }
+        response = self.client.put('/session/%s' % session_id, data=json.dumps(payload))
+        self.assert200(response)
+        self.assertTrue(is_uuid(response.json['session_id']))
+        self.assertTrue(is_uuid(response.json['session']['users'][1]['key']))
+        expected_response = {
+            'session': {
+                'ttl': 600,
+                'alias': 'the session alias',
+                'secret': 'my awesome secret',
+                'secret_sha256': '6e1f1d4f6b6c900f3fb72466bbec4a3c7c049fc845a8751a5374227091c1f252',
+                'users': [
+                    {
+                        'key': self._masterkey,
+                        'alias': self.master_alias,
+                        'role': 'master'},
+                    {
+                        'key': response.json['session']['users'][1]['key'],
+                        'alias': 'a shareholder',
+                        'role': 'user'
+                    }
+                ]
+            },
+            'session_id': session_id
+        }
+        self.assertEqual(expected_response, response.json)
+        return response.json
+
+    def test_user_get_session_with_secret(self):
+        session_with_secret = self.test_master_put_secret_on_joined_session()
+        session_id = session_with_secret['session_id']
+        user_key = session_with_secret['session']['users'][1]['key']
+        response = self.client.get('/session/%s?auth=%s' % (session_id, user_key))
+        self.assert200(response)
+        expected_response = {
+            'session_id': session_id,
+            'session': {
+                'secret_sha256': '6e1f1d4f6b6c900f3fb72466bbec4a3c7c049fc845a8751a5374227091c1f252',
+                'ttl': 600,
+                'alias': 'the session alias',
+                'users': [
+                    {
+                        'alias': 'the session master',
+                        'role': 'master'
+                    },
+                    {
+                        'key': user_key,
+                        'alias': 'a shareholder',
+                        'role': 'user'
+                    }
+                ]
+            }
+        }
+        self.assertEqual(expected_response, response.json)
