@@ -26,3 +26,7 @@ $ ./run-ssshare
 $ . venv/bin/activate
 $ python -m unittest
 ```
+
+##### How ?
+
+![Flow diagram](http://url/to/img.png)
