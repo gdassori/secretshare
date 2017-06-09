@@ -29,4 +29,6 @@ $ python -m unittest
 
 ##### How ?
 
-![Flow diagram](http://url/to/img.png)
+Assuming the secret policy is a 2-on-3, the diagram is the following:
+
+![Flow diagram](https://raw.githubusercontent.com/gdassori/ssshare/master/resources/secret_split_and_recovery.png)
