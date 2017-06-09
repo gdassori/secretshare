@@ -120,6 +120,7 @@ class TestSession(MainTestClass):
 
     def test_master_put_secret_on_joined_session(self):
         joined_session = self.test_join_session()
+        print('TestSession: a master is able to put a secret and its rules into a session')
         session_id = joined_session['session_id']
         payload = {
             'session': {
@@ -161,6 +162,7 @@ class TestSession(MainTestClass):
 
     def test_user_get_session_with_secret(self):
         session_with_secret = self.test_master_put_secret_on_joined_session()
+        print('TestSession: a user is able to see the hash of the secret presented by the master')
         session_id = session_with_secret['session_id']
         user_key = session_with_secret['session']['users'][1]['key']
         response = self.client.get('/session/%s?auth=%s' % (session_id, user_key))

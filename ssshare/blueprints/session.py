@@ -1,6 +1,6 @@
 import flask
 from flask.views import MethodView
-from ssshare import exceptions, settings
+from ssshare import exceptions
 from ssshare.blueprints import combinators
 from ssshare.domain.master import ShareSessionMaster
 from ssshare.domain.session import ShareSession
@@ -47,7 +47,6 @@ class SessionShareView(MethodView):
             user = session.join(params['user_alias'])
         if not user:
             raise exceptions.ObjectDeniedException
-        print('user is {}'.format(user.to_dict()))
         if user.is_master:
             session.set_from_payload(dict(params))
         session.update()
