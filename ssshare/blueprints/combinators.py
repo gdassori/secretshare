@@ -1,5 +1,5 @@
+import uuid
 import functools
-from uuid import UUID
 import flask
 from flask import json
 from pycomb import combinators
@@ -10,7 +10,7 @@ from ssshare import exceptions, settings
 def is_uuid(value):
     try:
         assert value
-        return UUID(value)
+        return uuid.UUID(value)
     except (TypeError, ValueError, AssertionError):
         return
 

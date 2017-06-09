@@ -67,7 +67,7 @@ class TestSession(MainTestClass):
         session_id, user_key = jsonresponse['session_id'], jsonresponse['session']['users'][0]['key']
 
         # force session expiration
-        from ssshare.ioc import secret_share_repository
+        from ssshare.control import secret_share_repository
         data = secret_share_repository.get_session(session_id)
         data['last_update'] = 1 # epoch based, last update in the shiny 70s
         secret_share_repository.update_session(data)
@@ -190,7 +190,8 @@ class TestSession(MainTestClass):
 
     def test_master_fail_to_put_a_secret(self):
         """
-        shares < quorum
+        shares < quorum,
+        secret == None
         """
         joined_session = self.test_join_session()
         print('TestSession: a master fail to put a secret where shares are less than quorum')
@@ -200,6 +201,20 @@ class TestSession(MainTestClass):
                 'secret': {
                     'secret': 'my awesome secret',
                     'shares': 2,
+                    'quorum': 3
+                }
+            },
+            'user_alias': self.master_alias,
+            'auth': self._masterkey
+        }
+        response = self.client.put('/session/%s' % session_id, data=json.dumps(payload))
+        self.assert400(response)
+        print('TestSession: a master fail to put an empty secret')
+        payload = {
+            'session': {
+                'secret': {
+                    'secret': None,
+                    'shares': 5,
                     'quorum': 3
                 }
             },

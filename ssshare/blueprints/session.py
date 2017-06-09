@@ -41,14 +41,12 @@ class SessionShareView(MethodView):
         session = ShareSession.get(session_id)
         if not session:
             raise exceptions.DomainObjectNotFoundException
-        if params.get('auth'):
-            user = session.get_user(params['auth'], alias=str(params['user_alias']))
-        else:
-            user = session.join(params['user_alias'])
+        user = params.get('auth') and session.get_user(params['auth'], alias=str(params['user_alias'])) \
+               or session.join(params['user_alias'])
         if not user:
             raise exceptions.ObjectDeniedException
         if user.is_master:
-            session.set_from_payload(dict(params))
+            session.set_secret_from_payload(dict(params))
         session.update()
         return flask.jsonify(
             {

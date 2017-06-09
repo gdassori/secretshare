@@ -51,3 +51,19 @@ class ShareSessionSecret(DomainObject):
     @property
     def sha256(self) -> str:
         return self._secret and sha256(self._secret.encode()).hexdigest()
+
+    @property
+    def shares(self):
+        return self._shares or []
+
+    @property
+    def secret(self):
+        return self._secret
+
+    def split(self):
+        assert not self.shares
+        raise NotImplementedError
+
+    def combine(self):
+        assert not self.secret
+        raise NotImplementedError

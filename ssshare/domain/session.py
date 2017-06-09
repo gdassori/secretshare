@@ -1,12 +1,10 @@
 import time
 import uuid
-from uuid import UUID
-
 from ssshare import exceptions, settings
 from ssshare.domain import DomainObject
 from ssshare.domain.master import ShareSessionMaster
 from ssshare.domain.user import ShareSessionUser
-from ssshare.ioc import secret_share_repository
+from ssshare.control import secret_share_repository
 
 
 class ShareSession(DomainObject):
@@ -20,6 +18,7 @@ class ShareSession(DomainObject):
         self._last_update = None
         self._session_ttl = settings.SESSION_TTL
         self._current_user = None
+        self._shares = None
 
     @classmethod
     def new(cls, master=None, alias=None, repo=secret_share_repository):
@@ -52,7 +51,7 @@ class ShareSession(DomainObject):
         return i
 
     def get_user(self, user_id: str, alias: str = None):
-        user = UUID(user_id) == self.master.uuid and self.master or self._users.get(user_id, None)
+        user = uuid.UUID(user_id) == self.master.uuid and self.master or self._users.get(user_id, None)
         return alias is not None and user and user.alias == alias and user or user
 
     def to_dict(self) -> dict:
@@ -80,7 +79,7 @@ class ShareSession(DomainObject):
         return i
 
     @property
-    def uuid(self) -> (None, UUID):
+    def uuid(self) -> (None, uuid.UUID):
         return self._uuid
 
     def store(self) -> 'ShareSession':
@@ -127,7 +126,7 @@ class ShareSession(DomainObject):
         self._users[str(user.uuid)] = user
         return user
 
-    def set_from_payload(self, payload: dict):
+    def set_secret_from_payload(self, payload: dict):
         from ssshare.domain.sharesessionsecret import ShareSessionSecret
         self._secret = ShareSessionSecret.from_dict(payload['session']['secret'])
         return self._secret

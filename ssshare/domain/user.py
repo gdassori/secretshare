@@ -1,11 +1,11 @@
-from uuid import UUID
+import uuid
 from ssshare.domain import DomainObject
 
 
 class ShareSessionUser(DomainObject):
     ROLE = 'user'
 
-    def __init__(self, user_id: UUID = None, alias: str = None, session=None):
+    def __init__(self, user_id: uuid.UUID = None, alias: str = None, session=None):
         self._uuid = user_id
         self._alias = alias
         self._session = session
@@ -35,7 +35,7 @@ class ShareSessionUser(DomainObject):
     @classmethod
     def from_dict(cls, data: dict, session=None) -> 'ShareSessionUser':
         i = cls(session=session)
-        i._uuid = UUID(data['uuid'])
+        i._uuid = uuid.UUID(data['uuid'])
         i._alias = data['alias']
         return i
 
