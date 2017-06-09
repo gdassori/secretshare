@@ -27,8 +27,16 @@ $ . venv/bin/activate
 $ python -m unittest
 ```
 
-##### How ?
+##### What is this ?
 
-Assuming the secret policy is a 2-on-3, the diagram is the following:
+An app to coordinate the sharing and disclosure of collaborative secrets.
+
+Assuming a secret policy is a 2-on-3, the diagram is the following:
 
 ![Flow diagram](https://raw.githubusercontent.com/gdassori/ssshare/master/resources/secret_split_and_recovery.png)
+
+
+##### How ?
+
+Via HTTP API, for computers, and a web app, for humans (or viceversa...).
+Documentation will follow.
