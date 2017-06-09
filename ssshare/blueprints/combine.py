@@ -1,18 +1,22 @@
 import flask
 from flask.views import MethodView
 from ssshare import exceptions
-from ssshare.blueprints import combinators
-from ssshare.domain.master import ShareSessionMaster
-from ssshare.domain.session import ShareSession
+from ssshare.blueprints import validators
+from ssshare.domain.combine_session import CombineSession
+from ssshare.domain.master import SharedSessionMaster
 
-bp = flask.Blueprint('session', __name__)
+bp = flask.Blueprint('combine', __name__)
 
 
-class SessionCreateView(MethodView):
-    @combinators.validate(combinators.ShareSessionCreateCombinator)
+class CombineSessionCreateView(MethodView):
+    @validators.validate(validators.CombineSessionCreateValidator)
     def post(self, params=None):
-        user = ShareSessionMaster.new(alias=params['user_alias'])
-        session = ShareSession.new(master=user, alias=params['session_alias']).store()
+        user = SharedSessionMaster.new(alias=params['user_alias'])
+        session = CombineSession.new(
+            master=user,
+            alias=params['session_alias'],
+            session_type=params['session_type']
+        ).store()
         return flask.jsonify(
             {
                 "session": session.to_api(auth=user.uuid),
@@ -20,15 +24,10 @@ class SessionCreateView(MethodView):
             }
         )
 
-
-class SessionShareView(MethodView):
-    @combinators.validate(combinators.ShareSessionGetCombinator)
+class CombineSessionSharedView(MethodView):
+    @validators.validate(validators.CombineSessionGetValidator)
     def get(self, session_id, params=None):
-        session = ShareSession.get(session_id, auth=params['auth'])
-        if not session:
-            raise exceptions.DomainObjectNotFoundException
-        if not session.ttl:
-            raise exceptions.DomainObjectExpiredException
+        session = CombineSession.get(session_id, auth=params['auth'])
         return flask.jsonify(
             {
                 "session": session.to_api(auth=params['auth']),
@@ -36,17 +35,17 @@ class SessionShareView(MethodView):
             }
         )
 
-    @combinators.validate(combinators.ShareSessionEditCombinator)
+    @validators.validate(validators.CombineSessionEditValidator)
     def put(self, session_id, params=None):
-        session = ShareSession.get(session_id)
+        session = CombineSession.get(session_id)
         if not session:
             raise exceptions.DomainObjectNotFoundException
         user = params.get('auth') and session.get_user(params['auth'], alias=str(params['user_alias'])) \
                or session.join(params['user_alias'])
         if not user:
             raise exceptions.ObjectDeniedException
-        if user.is_master:
-            session.set_secret_from_payload(dict(params))
+        if params.get('share'):
+            session.add_share_from_payload(params['share'])
         session.update()
         return flask.jsonify(
             {
@@ -58,10 +57,10 @@ class SessionShareView(MethodView):
 bp.add_url_rule(
     '/<string:session_id>',
     methods=['GET', 'PUT', 'POST'],
-    view_func=SessionShareView.as_view('get_or_edit_session')
+    view_func=CombineSessionSharedView.as_view('combine_session_shared')
 )
 
 bp.add_url_rule(
     '',
     methods=['POST'],
-    view_func=SessionCreateView.as_view('create_session'))
+    view_func=CombineSessionCreateView.as_view('combine_session_create'))

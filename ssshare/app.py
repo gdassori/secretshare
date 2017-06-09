@@ -2,7 +2,7 @@ from flask import Flask, Response
 from pycomb.exceptions import PyCombValidationError
 
 from ssshare import settings, exceptions
-from ssshare.blueprints.session import bp as base_bp
+from ssshare.blueprints.split import bp as base_bp
 
 app = Flask(__name__)
 
@@ -11,7 +11,7 @@ app.config.update(
     SECRET_KEY=settings.FLASK_SECRET_KEY
 )
 
-app.register_blueprint(base_bp, url_prefix='/session')
+app.register_blueprint(base_bp, url_prefix='/split')
 
 
 @app.errorhandler(exceptions.WrongParametersException)

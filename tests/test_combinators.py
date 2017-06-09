@@ -1,35 +1,35 @@
 from unittest import TestCase
 from pycomb.exceptions import PyCombValidationError
-from ssshare.blueprints import combinators
+from ssshare.blueprints import validators
 
 
-class TestCombinators(TestCase):
+class TestValidators(TestCase):
     def setUp(self):
-        print('Initialized TestCombinators')
+        print('Initialized TestValidators')
         self._valid_create = {
                 "user_alias": "the session master",
                 "session_alias": "the session alias"
              }
 
-    def test_create_session_combinator(self):
-        print('TestCombinators: ShareSessionCreateCombinator')
-        combinators.ShareSessionCreateCombinator(self._valid_create)
+    def test_create_session_Validator(self):
+        print('TestValidators: ShareSessionCreateValidator')
+        validators.SplitSessionCreateValidator(self._valid_create)
         with self.assertRaises(PyCombValidationError):
             invalid = {k:v for k, v in self._valid_create.items()}
             invalid['user_alias'] = None
-            combinators.ShareSessionCreateCombinator(invalid)
+            validators.SplitSessionCreateValidator(invalid)
 
             invalid = {k: v for k, v in self._valid_create.items()}
             invalid['user_alias'] = 'not_uuid'
-            combinators.ShareSessionCreateCombinator(invalid)
+            validators.SplitSessionCreateValidator(invalid)
 
             invalid = {k: v for k, v in self._valid_create.items()}
             invalid['user_alias'] = 'not_uuid'
-            combinators.ShareSessionCreateCombinator(invalid)
+            validators.SplitSessionCreateValidator(invalid)
 
             invalid = {k: v for k, v in self._valid_create.items() if k != 'user_alias'}
-            combinators.ShareSessionCreateCombinator(invalid)
+            validators.SplitSessionCreateValidator(invalid)
 
             invalid = {k: v for k, v in self._valid_create.items()}
             invalid['moar'] = 'values'
-            combinators.ShareSessionCreateCombinator(invalid)
+            validators.SplitSessionCreateValidator(invalid)

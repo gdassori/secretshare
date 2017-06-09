@@ -1,6 +1,6 @@
 from hashlib import sha256
 from ssshare.domain import DomainObject
-from ssshare.domain.session import ShareSession
+from ssshare.domain.split_session import SplitSession
 
 
 class ShareSessionSecret(DomainObject):
@@ -27,7 +27,7 @@ class ShareSessionSecret(DomainObject):
         return self._quorum
 
     @classmethod
-    def new(cls, secret: str, session: ShareSession = None, shares: int = 5, quorum: int = 3):
+    def new(cls, secret: str, session: SplitSession = None, shares: int = 5, quorum: int = 3):
         i = cls(secret)
         i._session = session
         i._shares = shares

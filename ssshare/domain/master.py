@@ -1,8 +1,8 @@
 import uuid
-from ssshare.domain.user import ShareSessionUser
+from ssshare.domain.user import SharedSessionUser
 
 
-class ShareSessionMaster(ShareSessionUser):
+class SharedSessionMaster(SharedSessionUser):
     ROLE='master'
 
     @classmethod

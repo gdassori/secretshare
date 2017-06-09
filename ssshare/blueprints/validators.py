@@ -2,7 +2,7 @@ import uuid
 import functools
 import flask
 from flask import json
-from pycomb import combinators
+from pycomb import combinators as validators  # avoid combine feature\combinators misunderstanding
 from pycomb.exceptions import PyCombValidationError
 from ssshare import exceptions, settings
 
@@ -38,63 +38,68 @@ def validate(validation_class, silent=not settings.DEBUG):
     return decorator
 
 
-UUIDCombinator = combinators.subtype(
-    combinators.String,
+UUIDValidator = validators.subtype(
+    validators.String,
     is_uuid
 )
 
-ShareSessionDataCombinator = combinators.struct(
+SplitSessionDataValidator = validators.struct(
     {
-        "secret": combinators.struct(
+        "secret": validators.struct(
             {
-                "secret": combinators.String,
-                "shares": combinators.Int,
-                "quorum": combinators.Int
+                "secret": validators.String,
+                "shares": validators.Int,
+                "quorum": validators.Int
             }
         )
     }
 )
 
-ShareSessionCombinator = combinators.subtype(
-    ShareSessionDataCombinator,
+SplitSessionValidator = validators.subtype(
+    SplitSessionDataValidator,
     lambda x: x['secret']['shares'] >= x['secret']['quorum']
 )
 
 
 
-ShareSessionCreateCombinator = combinators.struct(
+SplitSessionCreateValidator = validators.struct(
     {
-        "user_alias": combinators.String,
-        "session_alias": combinators.String
+        "user_alias": validators.String,
+        "session_alias": validators.String
     },
     strict=True
 )
 
-ShareSessionGetCombinator = combinators.struct(
+SplitSessionGetValidator = validators.struct(
     {
-        "auth": UUIDCombinator
+        "auth": UUIDValidator
     },
     strict=True
 )
 
 
-ShareSessionJoinCombinator = combinators.struct(
+SplitSessionJoinValidator = validators.struct(
     {
-        "user_alias": combinators.String,
+        "user_alias": validators.String,
     },
     strict=True
 )
 
-ShareSessionMasterEditCombinator = combinators.struct(
+SplitSessionMasterEditValidator = validators.struct(
     {
-        "user_alias": combinators.String,
-        "auth": combinators.String,
-        "session": ShareSessionCombinator
+        "user_alias": validators.String,
+        "auth": validators.String,
+        "session": SplitSessionValidator
     },
     strict=True
 )
 
-ShareSessionEditCombinator = combinators.union(
-    ShareSessionJoinCombinator,
-    ShareSessionMasterEditCombinator
+SplitSessionEditValidator = validators.union(
+    SplitSessionJoinValidator,
+    SplitSessionMasterEditValidator
 )
+
+CombineSessionCreateValidator = NotImplementedError
+CombineSessionGetValidator = NotImplementedError
+CombineSessionJoinValidator = NotImplementedError
+CombineSessionEditValidator = NotImplementedError
