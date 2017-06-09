@@ -187,3 +187,24 @@ class TestSession(MainTestClass):
             }
         }
         self.assertEqual(expected_response, response.json)
+
+    def test_master_fail_to_put_a_secret(self):
+        """
+        shares < quorum
+        """
+        joined_session = self.test_join_session()
+        print('TestSession: a master fail to put a secret where shares are less than quorum')
+        session_id = joined_session['session_id']
+        payload = {
+            'session': {
+                'secret': {
+                    'secret': 'my awesome secret',
+                    'shares': 2,
+                    'quorum': 3
+                }
+            },
+            'user_alias': self.master_alias,
+            'auth': self._masterkey
+        }
+        response = self.client.put('/session/%s' % session_id, data=json.dumps(payload))
+        self.assert400(response)

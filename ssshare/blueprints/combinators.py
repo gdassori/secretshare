@@ -57,7 +57,7 @@ ShareSessionDataCombinator = combinators.struct(
 
 ShareSessionCombinator = combinators.subtype(
     ShareSessionDataCombinator,
-    lambda x: x['secret']['shares'] > x['secret']['quorum']
+    lambda x: x['secret']['shares'] >= x['secret']['quorum']
 )
 
 
@@ -66,20 +66,23 @@ ShareSessionCreateCombinator = combinators.struct(
     {
         "user_alias": combinators.String,
         "session_alias": combinators.String
-    }
+    },
+    strict=True
 )
 
 ShareSessionGetCombinator = combinators.struct(
     {
         "auth": UUIDCombinator
-    }
+    },
+    strict=True
 )
 
 
 ShareSessionJoinCombinator = combinators.struct(
     {
         "user_alias": combinators.String,
-    }
+    },
+    strict=True
 )
 
 ShareSessionMasterEditCombinator = combinators.struct(
@@ -87,7 +90,8 @@ ShareSessionMasterEditCombinator = combinators.struct(
         "user_alias": combinators.String,
         "auth": combinators.String,
         "session": ShareSessionCombinator
-    }
+    },
+    strict=True
 )
 
 ShareSessionEditCombinator = combinators.union(

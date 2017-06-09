@@ -1,5 +1,4 @@
-from _sha256 import sha256
-
+from hashlib import sha256
 from ssshare.domain import DomainObject
 from ssshare.domain.session import ShareSession
 
@@ -16,15 +15,15 @@ class ShareSessionSecret(DomainObject):
         raise NotImplementedError
 
     @property
-    def secret(self):
+    def secret(self) -> str:
         return self._secret
 
     @property
-    def shares(self):
+    def shares(self) -> int:
         return self._shares
 
     @property
-    def quorum(self):
+    def quorum(self) -> int:
         return self._quorum
 
     @classmethod
@@ -50,5 +49,5 @@ class ShareSessionSecret(DomainObject):
         return i
 
     @property
-    def sha256(self):
+    def sha256(self) -> str:
         return self._secret and sha256(self._secret.encode()).hexdigest()
