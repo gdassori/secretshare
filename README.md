@@ -1,4 +1,4 @@
-Ssshare (Safe Secrets Sharing)
+Ssshare (Simple Secrets Sharing)
 ===
 
 #### Secrets sharing system
