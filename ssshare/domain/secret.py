@@ -1,6 +1,7 @@
 from hashlib import sha256
 from ssshare.domain import DomainObject
 from ssshare.domain.split_session import SplitSession
+from secretsharing import PlaintextToHexSecretSharer
 
 
 class ShareSessionSecret(DomainObject):
@@ -9,6 +10,7 @@ class ShareSessionSecret(DomainObject):
         self._shares = None
         self._quorum = None
         self._secret = secret
+        self._splitted = []
 
     @property
     def uuid(self):
@@ -61,9 +63,14 @@ class ShareSessionSecret(DomainObject):
         return self._secret
 
     def split(self):
-        assert not self.shares
-        raise NotImplementedError
+        assert not self._splitted
+        shares = PlaintextToHexSecretSharer.split_secret(self._secret, self._quorum, self._shares,)
+        print(shares)
 
     def combine(self):
         assert not self.secret
         raise NotImplementedError
+
+if __name__ == '__main__':
+    s = ShareSessionSecret.new('cafebabe')
+    s.split()

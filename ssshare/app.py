@@ -2,7 +2,8 @@ from flask import Flask, Response
 from pycomb.exceptions import PyCombValidationError
 
 from ssshare import settings, exceptions
-from ssshare.blueprints.split import bp as base_bp
+from ssshare.blueprints.split import bp as split_bp
+from ssshare.blueprints.combine import bp as combine_bp
 
 app = Flask(__name__)
 
@@ -11,7 +12,8 @@ app.config.update(
     SECRET_KEY=settings.FLASK_SECRET_KEY
 )
 
-app.register_blueprint(base_bp, url_prefix='/split')
+app.register_blueprint(split_bp, url_prefix='/split')
+app.register_blueprint(combine_bp, url_prefix='/combine')
 
 
 @app.errorhandler(exceptions.WrongParametersException)

@@ -7,12 +7,12 @@ class TestValidators(TestCase):
     def setUp(self):
         print('Initialized TestValidators')
         self._valid_create = {
-                "user_alias": "the session master",
+                "client_alias": "the session master",
                 "session_alias": "the session alias"
              }
 
     def test_create_session_Validator(self):
-        print('TestValidators: ShareSessionCreateValidator')
+        print('Validators: ShareSessionCreateValidator')
         validators.SplitSessionCreateValidator(self._valid_create)
         with self.assertRaises(PyCombValidationError):
             invalid = {k:v for k, v in self._valid_create.items()}

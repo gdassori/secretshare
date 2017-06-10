@@ -11,7 +11,7 @@ bp = flask.Blueprint('combine', __name__)
 class CombineSessionCreateView(MethodView):
     @validators.validate(validators.CombineSessionCreateValidator)
     def post(self, params=None):
-        user = SharedSessionMaster.new(alias=params['user_alias'])
+        user = SharedSessionMaster.new(alias=params['client_alias'])
         session = CombineSession.new(
             master=user,
             alias=params['session_alias'],
@@ -24,10 +24,15 @@ class CombineSessionCreateView(MethodView):
             }
         )
 
+
 class CombineSessionSharedView(MethodView):
     @validators.validate(validators.CombineSessionGetValidator)
     def get(self, session_id, params=None):
         session = CombineSession.get(session_id, auth=params['auth'])
+        if not session:
+            raise exceptions.DomainObjectNotFoundException
+        if not session.ttl:
+            raise exceptions.DomainObjectExpiredException
         return flask.jsonify(
             {
                 "session": session.to_api(auth=params['auth']),
@@ -40,8 +45,8 @@ class CombineSessionSharedView(MethodView):
         session = CombineSession.get(session_id)
         if not session:
             raise exceptions.DomainObjectNotFoundException
-        user = params.get('auth') and session.get_user(params['auth'], alias=str(params['user_alias'])) \
-               or session.join(params['user_alias'])
+        user = params.get('auth') and session.get_user(params['auth'], alias=str(params['client_alias'])) \
+               or session.join(params['client_alias'])
         if not user:
             raise exceptions.ObjectDeniedException
         if params.get('share'):

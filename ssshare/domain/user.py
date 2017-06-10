@@ -45,7 +45,7 @@ class SharedSessionUser(DomainObject):
             role=self.ROLE
         )
         if self._is_auth_valid(auth):
-            res['key'] = str(self.uuid)
+            res['auth'] = str(self.uuid)
         return res
 
     def _is_auth_valid(self, auth: str):

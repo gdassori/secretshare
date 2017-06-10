@@ -64,7 +64,7 @@ SplitSessionValidator = validators.subtype(
 
 SplitSessionCreateValidator = validators.struct(
     {
-        "user_alias": validators.String,
+        "client_alias": validators.String,
         "session_alias": validators.String
     },
     strict=True
@@ -80,14 +80,14 @@ SplitSessionGetValidator = validators.struct(
 
 SplitSessionJoinValidator = validators.struct(
     {
-        "user_alias": validators.String,
+        "client_alias": validators.String,
     },
     strict=True
 )
 
 SplitSessionMasterEditValidator = validators.struct(
     {
-        "user_alias": validators.String,
+        "client_alias": validators.String,
         "auth": validators.String,
         "session": SplitSessionValidator
     },

@@ -11,7 +11,7 @@ bp = flask.Blueprint('split', __name__)
 class SplitSessionCreateView(MethodView):
     @validators.validate(validators.SplitSessionCreateValidator)
     def post(self, params=None):
-        user = SharedSessionMaster.new(alias=params['user_alias'])
+        user = SharedSessionMaster.new(alias=params['client_alias'])
         session = SplitSession.new(master=user, alias=params['session_alias']).store()
         return flask.jsonify(
             {
@@ -41,8 +41,8 @@ class SplitSessionSharedView(MethodView):
         session = SplitSession.get(session_id)
         if not session:
             raise exceptions.DomainObjectNotFoundException
-        user = params.get('auth') and session.get_user(params['auth'], alias=str(params['user_alias'])) \
-               or session.join(params['user_alias'])
+        user = params.get('auth') and session.get_user(params['auth'], alias=str(params['client_alias'])) \
+               or session.join(params['client_alias'])
         if not user:
             raise exceptions.ObjectDeniedException
         if user.is_master:
