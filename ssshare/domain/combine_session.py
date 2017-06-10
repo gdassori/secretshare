@@ -34,14 +34,14 @@ class CombineSession(SharedSession):
     def from_dict(cls, data: dict, repo=secret_share_repository) -> 'CombineSession':
         from ssshare.domain.master import SharedSessionMaster
         from ssshare.domain.user import SharedSessionUser
-        from ssshare.domain.secret import ShareSessionSecret
+        from ssshare.domain.secret import SharedSessionSecret
         i = cls(repo=repo)
         i._uuid = data['uuid']
         i._master = data.get('master') and SharedSessionMaster.from_dict(data['master'], session=i)
         i._last_update = data['last_update']
         i._alias = data['alias']
         i._users = {u['uuid']: SharedSessionUser.from_dict(u, session=i) for u in data['users']}
-        i._secret = data['secret'] and ShareSessionSecret.from_dict(data['secret'])
+        i._secret = data['secret'] and SharedSessionSecret.from_dict(data['secret'])
         i._type = CombineSessionType(data['type'])
         return i
 

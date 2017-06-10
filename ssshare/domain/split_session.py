@@ -26,14 +26,14 @@ class SplitSession(SharedSession):
     def from_dict(cls, data: dict, repo=secret_share_repository) -> 'SplitSession':
         from ssshare.domain.master import SharedSessionMaster
         from ssshare.domain.user import SharedSessionUser
-        from ssshare.domain.secret import ShareSessionSecret
+        from ssshare.domain.secret import SharedSessionSecret
         i = cls(repo=repo)
         i._uuid = data['uuid']
         i._master = data.get('master') and SharedSessionMaster.from_dict(data['master'], session=i)
         i._last_update = data['last_update']
         i._alias = data['alias']
         i._users = {u['uuid']: SharedSessionUser.from_dict(u, session=i) for u in data['users']}
-        i._secret = data['secret'] and ShareSessionSecret.from_dict(data['secret'])
+        i._secret = data['secret'] and SharedSessionSecret.from_dict(data['secret'])
         return i
 
     def to_api(self, auth=None):
@@ -49,6 +49,6 @@ class SplitSession(SharedSession):
         return res
 
     def set_secret_from_payload(self, payload: dict):
-        from ssshare.domain.secret import ShareSessionSecret
-        self._secret = ShareSessionSecret.from_dict(payload['session']['secret'])
+        from ssshare.domain.secret import SharedSessionSecret
+        self._secret = SharedSessionSecret.from_dict(payload['session']['secret'])
         return self._secret

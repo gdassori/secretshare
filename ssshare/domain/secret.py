@@ -4,7 +4,7 @@ from ssshare.domain.split_session import SplitSession
 from secretsharing import PlaintextToHexSecretSharer
 
 
-class ShareSessionSecret(DomainObject):
+class SharedSessionSecret(DomainObject):
     def __init__(self, secret: str):
         self._session = None
         self._shares = None
@@ -44,7 +44,7 @@ class ShareSessionSecret(DomainObject):
         )
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'ShareSessionSecret':
+    def from_dict(cls, data: dict) -> 'SharedSessionSecret':
         i = cls(data['secret'])
         i._quorum = data['quorum']
         i._shares = data['shares']
@@ -72,5 +72,5 @@ class ShareSessionSecret(DomainObject):
         raise NotImplementedError
 
 if __name__ == '__main__':
-    s = ShareSessionSecret.new('cafebabe')
+    s = SharedSessionSecret.new('cafebabe')
     s.split()

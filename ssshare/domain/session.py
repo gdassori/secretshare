@@ -100,3 +100,9 @@ class SharedSession(DomainObject, metaclass=abc.ABCMeta):
         user = SharedSessionUser(user_id=uuid.uuid4(), alias=alias)
         self._users[str(user.uuid)] = user
         return user
+
+    def add_share_from_payload(self, share: str) -> 'SharedSession':
+        raise NotImplementedError
+
+    def set_secret_from_payload(self, payload: dict):
+        raise NotImplementedError
