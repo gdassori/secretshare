@@ -99,6 +99,7 @@ class SharedSession(DomainObject, metaclass=abc.ABCMeta):
 
         user = SharedSessionUser(user_id=uuid.uuid4(), alias=alias)
         self._users[str(user.uuid)] = user
+        self._secret and self._secret.splitted and self._secret.attach_user_to_share(user)
         return user
 
     @property
