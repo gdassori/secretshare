@@ -29,7 +29,8 @@ class TestCombineSession(MainTestClass):
                         {
                             'alias': 'the session master',
                             'role': 'master',
-                            'auth': self._masterkey
+                            'auth': self._masterkey,
+                            'shareholder': False
                         }
                     ],
                     'secret_sha256': None,

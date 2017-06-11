@@ -59,7 +59,6 @@ class TestSplitSession(MainTestClass):
         print('SplitSession: a master get a created session')
         session_id, user_auth = jsonresponse['session_id'], jsonresponse['session']['users'][0]['auth']
         response = self.client.get('/split/%s?auth=%s' % (session_id, user_auth))
-        print(response.json)
         self.assertEqual(response.json, jsonresponse)
 
     def test_get_session_404_no_session(self):
@@ -116,7 +115,6 @@ class TestSplitSession(MainTestClass):
             },
             'session_id': session_id
         }
-        print(response.json)
         self.assertEqual(expected_response, response.json)
         return response.json
 
@@ -225,7 +223,7 @@ class TestSplitSession(MainTestClass):
                         'auth': user_key,
                         'alias': 'a shareholder',
                         'role': 'user',
-                        'shareholder': True
+                        'share': 'cafe01'
                     }
                 ]
             }
