@@ -8,6 +8,7 @@ class SharedSessionMaster(SharedSessionUser):
     @classmethod
     def new(cls, alias=None):
         i = cls(user_id=str(uuid.uuid4()), alias=alias)
+        i._shareholder = False
         return i
 
     @property
@@ -21,5 +22,6 @@ class SharedSessionMaster(SharedSessionUser):
     def to_dict(self) -> dict:
         return dict(
             uuid=str(self._uuid),
-            alias=self._alias
+            alias=self._alias,
+            shareholder=self._shareholder
         )

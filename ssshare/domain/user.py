@@ -9,6 +9,7 @@ class SharedSessionUser(DomainObject):
         self._uuid = user_id
         self._alias = alias
         self._session = session
+        self._shareholder = True
 
     @property
     def is_master(self):
@@ -29,7 +30,8 @@ class SharedSessionUser(DomainObject):
     def to_dict(self) -> dict:
         return dict(
             uuid=str(self._uuid),
-            alias=self._alias
+            alias=self._alias,
+            shareholder=self._shareholder
         )
 
     @classmethod
@@ -37,6 +39,7 @@ class SharedSessionUser(DomainObject):
         i = cls(session=session)
         i._uuid = uuid.UUID(data['uuid'])
         i._alias = data['alias']
+        i._shareholder = data['shareholder']
         return i
 
     def to_api(self, auth=None):
@@ -44,8 +47,14 @@ class SharedSessionUser(DomainObject):
             alias=self._alias,
             role=self.ROLE
         )
+        if self.ROLE == 'master':
+            res['shareholder'] = self._shareholder
         if self._is_auth_valid(auth):
             res['auth'] = str(self.uuid)
+            if self._session and self._session._secret and self._session._secret._splitted:
+                share = self._session._secret.get_share(res['auth'])
+                if share:
+                    res['share'] = share and share.value
         return res
 
     def _is_auth_valid(self, auth: str):

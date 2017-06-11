@@ -4,6 +4,23 @@ from hashlib import sha256
 from ssshare import exceptions, settings
 from ssshare.domain import DomainObject
 from ssshare.domain.split import SplitSession
+from ssshare.domain.user import SharedSessionUser
+
+
+class Share():
+    def __init__(self, value, user=None):
+        self.user = user
+        self.value = value
+
+    def to_dict(self):
+        return {
+            'user': self.user and str(self.user),
+            'value': self.value
+        }
+
+    @classmethod
+    def from_dict(cls, data: dict):
+        return cls(user=data['user'], value=data['value'])
 
 
 class SecretProtocol(Enum):
@@ -19,6 +36,13 @@ class SharedSessionSecret(DomainObject):
         self._splitted = []
         self._protocol = SecretProtocol(settings.DEFAULT_SSS_PROTOCOL)
 
+    @property
+    def split_service(self):
+        from ssshare.control import fxc_web_api_service
+        return {
+            SecretProtocol.FXC1: fxc_web_api_service
+        }
+
     def edit_secret(self, value: dict):
         value.get('value') and self._set_secret(value['value'])
         value.get('shares') and self._set_shares(value['shares'])
@@ -30,6 +54,7 @@ class SharedSessionSecret(DomainObject):
         if self._secret:
             raise exceptions.ObjectDeniedException
         self._secret = secret
+        self._split()
 
     def _set_shares(self, shares: int):
         if shares < len(self._session.users):
@@ -73,7 +98,8 @@ class SharedSessionSecret(DomainObject):
             secret=self.secret,
             shares=self.shares,
             quorum=self.quorum,
-            protocol=self._protocol and self._protocol.value
+            protocol=self._protocol and self._protocol.value,
+            splitted=[s.to_dict() for s in self._splitted]
         )
 
     @classmethod
@@ -83,6 +109,7 @@ class SharedSessionSecret(DomainObject):
         i._quorum = data['quorum']
         i._shares = data['shares']
         i._protocol = SecretProtocol(data['protocol'])
+        i._splitted = [Share(value=x['value'], user=x['user']) for x in data['splitted']]
         return i
 
     @property
@@ -90,15 +117,14 @@ class SharedSessionSecret(DomainObject):
         return self._secret and sha256(self._secret.encode()).hexdigest()
 
     @property
-    def shares(self):
-        return self._shares or []
+    def splitted(self):
+        if not self.secret:
+            return []
+        return self._splitted or self._split()
 
     @property
     def secret(self):
         return self._secret
-
-    def split(self):
-        raise NotImplementedError
 
     def combine(self):
         assert not self.secret
@@ -114,3 +140,25 @@ class SharedSessionSecret(DomainObject):
         if self._session and auth and self._session.master and auth == str(self._session.master.uuid):
             res['secret'] = self._secret
         return res
+
+    def _split(self):
+        assert self._secret
+        shares = self.split_service[self._protocol].split(self)
+        for i, user in enumerate(self._session.users):
+            shares[i].user = str(user.uuid)
+        self._splitted = shares
+        return self._splitted
+
+    def attach_user_to_share(self, user: SharedSessionUser):
+        for share in self._splitted:
+            if not share.user:
+                share.user = user.uuid
+                _s = share
+                return _s
+        raise exceptions.ObjectDeniedException
+
+    def get_share(self, user_id: str):
+        assert self._splitted
+        for share in self._splitted:
+            if share.user == user_id:
+                return share

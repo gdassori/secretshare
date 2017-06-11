@@ -1,5 +1,8 @@
 import json
 import uuid
+from unittest.mock import create_autospec
+from ssshare.domain.secret import Share
+from ssshare.services.fxc.api import FXCWebApiService
 from tests import MainTestClass
 from ssshare.blueprints.validators import is_uuid
 
@@ -38,7 +41,8 @@ class TestSplitSession(MainTestClass):
                         {
                             'alias': 'the session master',
                             'role': 'master',
-                            'auth': self._masterkey
+                            'auth': self._masterkey,
+                            'shareholder': False
                         }
                     ],
                     'ttl': 600,
@@ -104,7 +108,7 @@ class TestSplitSession(MainTestClass):
                     'protocol': 'fxc1'
                 },
                 'users': [
-                    {'role': 'master', 'alias': 'the session master'},
+                    {'role': 'master', 'alias': 'the session master', 'shareholder': False},
                     {'role': 'user', 'auth': user_auth, 'alias': 'a shareholder'}
                 ],
                 'ttl': 600,
@@ -134,6 +138,16 @@ class TestSplitSession(MainTestClass):
         self.assert401(response)
 
     def test_master_put_secret_on_joined_session(self):
+        from ssshare import control
+        control.fxc_web_api_service = create_autospec(FXCWebApiService)
+        shares = [
+            Share(value='cafe01'),
+            Share(value='cafe02'),
+            Share(value='cafe03'),
+            Share(value='cafe04'),
+            Share(value='cafe05')
+        ]
+        control.fxc_web_api_service.split.return_value = shares
         joined_session = self.test_join_session()
         print('SplitSession: a master is able to put a secret and its rules into a session')
         session_id = joined_session['session_id']
@@ -165,17 +179,22 @@ class TestSplitSession(MainTestClass):
                     {
                         'auth': self._masterkey,
                         'alias': self.master_alias,
-                        'role': 'master'},
+                        'role': 'master',
+                        'shareholder': False
+                    },
                     {
                         'auth': response.json['session']['users'][1]['auth'],
                         'alias': 'a shareholder',
-                        'role': 'user'
+                        'role': 'user',
+                        'share': 'cafe01'
                     }
                 ]
             },
             'session_id': session_id
         }
         self.assertEqual(expected_response, response.json)
+        self.assertTrue(control.fxc_web_api_service.split.called)
+        self.assertEqual(shares[0].user, response.json['session']['users'][1]['auth'])
         return response.json
 
     def test_user_get_session_with_secret(self):
@@ -199,12 +218,14 @@ class TestSplitSession(MainTestClass):
                 'users': [
                     {
                         'alias': 'the session master',
-                        'role': 'master'
+                        'role': 'master',
+                        'shareholder': False
                     },
                     {
                         'auth': user_key,
                         'alias': 'a shareholder',
-                        'role': 'user'
+                        'role': 'user',
+                        'shareholder': True
                     }
                 ]
             }
