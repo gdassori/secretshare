@@ -2,7 +2,7 @@ import uuid
 import functools
 import flask
 from flask import json
-from pycomb import combinators as validators  # avoid combine feature\combinators misunderstanding
+from pycomb import combinators as validators
 from pycomb.exceptions import PyCombValidationError
 from ssshare import exceptions, settings
 
@@ -99,7 +99,15 @@ SplitSessionEditValidator = validators.union(
     SplitSessionMasterEditValidator
 )
 
-CombineSessionCreateValidator = NotImplementedError
+CombineSessionCreateValidator = validators.struct(
+    {
+        "client_alias": validators.String,
+        "session_alias": validators.String,
+        "session_type": validators.String,
+        "session_id": validators.maybe(UUIDValidator)
+    },
+    strict=True
+)
 CombineSessionGetValidator = NotImplementedError
 CombineSessionJoinValidator = NotImplementedError
 CombineSessionEditValidator = NotImplementedError

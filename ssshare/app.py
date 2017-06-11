@@ -1,6 +1,5 @@
 from flask import Flask, Response
 from pycomb.exceptions import PyCombValidationError
-
 from ssshare import settings, exceptions
 from ssshare.blueprints.split import bp as split_bp
 from ssshare.blueprints.combine import bp as combine_bp

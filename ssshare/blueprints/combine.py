@@ -11,8 +11,11 @@ bp = flask.Blueprint('combine', __name__)
 class CombineSessionCreateView(MethodView):
     @validators.validate(validators.CombineSessionCreateValidator)
     def post(self, params=None):
-        user = SharedSessionMaster.new(alias=params['client_alias'])
+        user = SharedSessionMaster.new(
+            alias=params['client_alias']
+        )
         session = CombineSession.new(
+            session_id=params.get('session_id'),
             master=user,
             alias=params['session_alias'],
             session_type=params['session_type']

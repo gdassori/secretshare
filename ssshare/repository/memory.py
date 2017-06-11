@@ -11,7 +11,7 @@ class VolatileRepository(Repository):
         return data or None
 
     def store_session(self, data: dict):
-        session_id = str(uuid4())
+        session_id = data.get('session_id', str(uuid4()))
         assert not self._storage.get(session_id)
         data['uuid'] = session_id
         self._storage[session_id] = data

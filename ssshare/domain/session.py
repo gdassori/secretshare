@@ -66,14 +66,12 @@ class SharedSession(DomainObject, metaclass=abc.ABCMeta):
         return self._uuid
 
     def store(self) -> 'SharedSession':
-        assert not self._uuid
         self._last_update = int(time.time())
         res = self._repo.store_session(self.to_dict())
         self._uuid = res['uuid']
         return self
 
     def update(self) -> 'SharedSession':
-        assert self._uuid
         self._last_update = int(time.time())
         self._repo.update_session(self.to_dict())
         return self

@@ -1,7 +1,7 @@
+import uuid
 from enum import Enum
 from ssshare.domain.session import SharedSession
 from ssshare.control import secret_share_repository
-
 
 class CombineSessionType(Enum):
     TRANSPARENT = 'transparent'  # All users obtain the redeemed secret
@@ -14,9 +14,11 @@ class CombineSession(SharedSession):
         self._type = session_type
 
     @classmethod
-    def new(cls, master=None, alias=None, session_type=None, repo=secret_share_repository):
+    def new(cls, session_id=None, master=None, alias=None, session_type=None, repo=secret_share_repository):
         _type = CombineSessionType(session_type)
         i = cls(master=master, alias=alias, repo=repo, session_type=_type)
+        if session_id:
+            i._uuid = uuid.UUID(session_id)
         return i
 
     def to_dict(self) -> dict:
