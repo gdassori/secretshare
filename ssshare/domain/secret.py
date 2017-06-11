@@ -1,6 +1,6 @@
 from hashlib import sha256
 from ssshare.domain import DomainObject
-from ssshare.domain.split_session import SplitSession
+from ssshare.domain.split import SplitSession
 from secretsharing import PlaintextToHexSecretSharer
 
 

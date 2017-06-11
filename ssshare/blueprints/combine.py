@@ -2,7 +2,7 @@ import flask
 from flask.views import MethodView
 from ssshare import exceptions
 from ssshare.blueprints import validators
-from ssshare.domain.combine_session import CombineSession
+from ssshare.domain.combine import CombineSession
 from ssshare.domain.master import SharedSessionMaster
 
 bp = flask.Blueprint('combine', __name__)

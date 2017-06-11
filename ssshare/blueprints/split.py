@@ -3,7 +3,7 @@ from flask.views import MethodView
 from ssshare import exceptions
 from ssshare.blueprints import validators
 from ssshare.domain.master import SharedSessionMaster
-from ssshare.domain.split_session import SplitSession
+from ssshare.domain.split import SplitSession
 
 bp = flask.Blueprint('split', __name__)
 

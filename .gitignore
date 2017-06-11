@@ -102,3 +102,7 @@ ENV/
 
 # pycharm
 .idea/
+
+# FXC
+fxc/bin
+fxc/src
