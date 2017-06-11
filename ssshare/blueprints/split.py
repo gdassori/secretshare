@@ -52,8 +52,7 @@ class SplitSessionSharedView(MethodView):
         if not user:
             raise exceptions.ObjectDeniedException
         if user.is_master:
-            print(params['session']['secret'])
-            session.secret.set_secret(dict(params['session']['secret']))
+            session.secret.edit_secret(dict(params['session']['secret']))
         session.update()
         return flask.jsonify(
             {

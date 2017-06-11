@@ -17,13 +17,29 @@ class SharedSessionSecret(DomainObject):
         self._quorum = None
         self._secret = None
         self._splitted = []
+        self._protocol = SecretProtocol(settings.DEFAULT_SSS_PROTOCOL)
 
-    def set_secret(self, value: dict):
+    def edit_secret(self, value: dict):
+        value.get('value') and self._set_secret(value['value'])
+        value.get('shares') and self._set_shares(value['shares'])
+        value.get('quorum') and self._set_quorum(value['quorum'])
+        value.get('protocol') and SecretProtocol(value.get('protocol', 'fxc1'))
+        return self
+
+    def _set_secret(self, secret: str):
         if self._secret:
             raise exceptions.ObjectDeniedException
-        self._secret = value['value']
-        self._protocol = SecretProtocol(value.get('protocol', 'fxc1'))
-        return self
+        self._secret = secret
+
+    def _set_shares(self, shares: int):
+        if shares < len(self._session.users):
+            raise exceptions.WrongParametersException('shares < users')
+        self._shares = shares
+
+    def _set_quorum(self, quorum: int):
+        if quorum >= self._shares:
+            raise exceptions.WrongParametersException('quorum >= shares')
+        self._quorum = quorum
 
     @property
     def uuid(self):
@@ -42,13 +58,14 @@ class SharedSessionSecret(DomainObject):
             session: SplitSession = None,
             shares: int = 5,
             quorum: int = 3,
-            protocol=settings.DEFAULT_SSS_PROTOCOL
+            protocol=None
             ):
         i = cls()
         i._session = session
         i._shares = shares
         i._quorum = quorum
-        i._protocol = SecretProtocol(protocol)
+        if protocol:
+            i._protocol = SecretProtocol(protocol)
         return i
 
     def to_dict(self) -> dict:
