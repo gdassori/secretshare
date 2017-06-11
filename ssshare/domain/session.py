@@ -47,7 +47,7 @@ class SharedSession(DomainObject, metaclass=abc.ABCMeta):
     def get(cls, session_id: str, auth: str=None, repo=secret_share_repository) -> 'SharedSession':
         session = repo.get_session(session_id)
         if not session:
-            raise exceptions.DomainObjectNotFoundException
+            raise exceptions.ObjectNotFoundException
         i = cls.from_dict(session, repo=repo)
         if auth and not i.get_user(auth):
             raise exceptions.ObjectDeniedException
@@ -94,13 +94,13 @@ class SharedSession(DomainObject, metaclass=abc.ABCMeta):
         users = self._get_users_aliases()
         if alias in users:
             raise exceptions.ObjectDeniedException
+        if self._secret and len(users) > self._secret.shares:
+            raise exceptions.DomainObjectBusyException
 
         user = SharedSessionUser(user_id=uuid.uuid4(), alias=alias)
         self._users[str(user.uuid)] = user
         return user
 
-    def add_share_from_payload(self, share: str) -> 'SharedSession':
-        raise NotImplementedError
-
-    def set_secret_from_payload(self, payload: dict):
-        raise NotImplementedError
+    @property
+    def secret(self) -> 'SharedSessionSecret':
+        return self._secret

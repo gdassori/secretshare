@@ -8,7 +8,11 @@ class TestValidators(TestCase):
         print('Initialized TestValidators')
         self._valid_create = {
                 "client_alias": "the session master",
-                "session_alias": "the session alias"
+                "session_alias": "the session alias",
+                "session_policies": {
+                    "quorum": 3,
+                    "shares": 5
+                }
              }
 
     def test_create_session_Validator(self):

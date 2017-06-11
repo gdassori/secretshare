@@ -8,8 +8,10 @@ class SplitSession(SharedSession):
         super().__init__(master=master, alias=alias, repo=repo)
 
     @classmethod
-    def new(cls, master=None, alias=None, repo=secret_share_repository):
+    def new(cls, master=None, alias=None, policies=None, repo=secret_share_repository):
+        from ssshare.domain.secret import SharedSessionSecret
         i = cls(master=master, alias=alias, repo=repo)
+        i._secret = SharedSessionSecret.new(session=i, shares=policies['shares'], quorum=policies['quorum'])
         return i
 
     def to_dict(self) -> dict:
@@ -34,21 +36,18 @@ class SplitSession(SharedSession):
         i._alias = data['alias']
         i._users = {u['uuid']: SharedSessionUser.from_dict(u, session=i) for u in data['users']}
         i._secret = data['secret'] and SharedSessionSecret.from_dict(data['secret'])
+        i._secret._session = i._secret and i
         return i
 
     def to_api(self, auth=None):
         users = [self.master.to_api(auth=auth)] + [user.to_api(auth=auth) for user in self.users]
-        res = {
+        return {
             'ttl': self.ttl,
             'users': users,
-            'secret_sha256': self._secret and self._secret.sha256,
-            'alias': self._alias
+            'alias': self._alias,
+            'secret': self._secret and self._secret.to_api(auth)
         }
-        if auth and self.master and auth == str(self.master.uuid):
-            res['secret'] = self._secret and self._secret.secret
-        return res
 
-    def set_secret_from_payload(self, payload: dict):
-        from ssshare.domain.secret import SharedSessionSecret
-        self._secret = SharedSessionSecret.from_dict(payload['session']['secret'])
-        return self._secret
+    @property
+    def secret(self):
+        return self._secret and self._secret

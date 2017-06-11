@@ -43,29 +43,32 @@ UUIDValidator = validators.subtype(
     is_uuid
 )
 
-SplitSessionDataValidator = validators.struct(
+SplitProtocolValidator = validators.subtype(
+    validators.String,
+    lambda x: x in ['fxc1']
+)
+
+SplitSessionValidator = validators.struct(
     {
         "secret": validators.struct(
             {
-                "secret": validators.String,
-                "shares": validators.Int,
-                "quorum": validators.Int
+                "value": validators.String,
+                "protocol": validators.maybe(SplitProtocolValidator)
             }
         )
     }
 )
 
-SplitSessionValidator = validators.subtype(
-    SplitSessionDataValidator,
-    lambda x: x['secret']['shares'] >= x['secret']['quorum']
-)
-
-
-
 SplitSessionCreateValidator = validators.struct(
     {
         "client_alias": validators.String,
-        "session_alias": validators.String
+        "session_alias": validators.String,
+        "session_policies": validators.struct(
+            {
+                "shares": validators.Int,
+                "quorum": validators.Int
+            }
+        )
     },
     strict=True
 )
@@ -108,6 +111,19 @@ CombineSessionCreateValidator = validators.struct(
     },
     strict=True
 )
-CombineSessionGetValidator = NotImplementedError
-CombineSessionJoinValidator = NotImplementedError
+
+CombineSessionGetValidator = validators.struct(
+    {
+        "auth": UUIDValidator
+    },
+    strict=True
+)
+
+CombineSessionJoinValidator = validators.struct(
+    {
+        "client_alias": validators.String,
+    },
+    strict=True
+)
+
 CombineSessionEditValidator = NotImplementedError

@@ -13,7 +13,11 @@ class TestSplitSession(MainTestClass):
         print('SplitSession: a master create a session')
         payload = {
             "client_alias": self.master_alias,
-            "session_alias": self.session_alias
+            "session_alias": self.session_alias,
+            "session_policies": {
+                "quorum": 3,
+                "shares": 5
+            }
         }
         response = self.client.post('/split', data=json.dumps(payload))
         self.assert200(response)
@@ -23,7 +27,13 @@ class TestSplitSession(MainTestClass):
         self.assertEqual(
             {
                 'session': {
-                    'secret': None,
+                    'secret': {
+                        'quorum': 3,
+                        'shares': 5,
+                        'sha256': None,
+                        'secret': None,
+                        'protocol': 'fxc1'
+                    },
                     'users': [
                         {
                             'alias': 'the session master',
@@ -31,7 +41,6 @@ class TestSplitSession(MainTestClass):
                             'auth': self._masterkey
                         }
                     ],
-                    'secret_sha256': None,
                     'ttl': 600,
                     'alias': 'the session alias'
                 },
@@ -44,8 +53,9 @@ class TestSplitSession(MainTestClass):
     def test_get_session(self):
         jsonresponse = self.test_create_session()
         print('SplitSession: a master get a created session')
-        session_id, user_key = jsonresponse['session_id'], jsonresponse['session']['users'][0]['auth']
-        response = self.client.get('/split/%s?auth=%s' % (session_id, user_key))
+        session_id, user_auth = jsonresponse['session_id'], jsonresponse['session']['users'][0]['auth']
+        response = self.client.get('/split/%s?auth=%s' % (session_id, user_auth))
+        print(response.json)
         self.assertEqual(response.json, jsonresponse)
 
     def test_get_session_404_no_session(self):
@@ -84,19 +94,25 @@ class TestSplitSession(MainTestClass):
         self.assert200(response)
         self.assertTrue(is_uuid(response.json['session_id']))
         self.assertTrue(is_uuid(response.json['session']['users'][1]['auth']))
-        session_id, user_key = response.json['session_id'], response.json['session']['users'][1]['auth']
+        session_id, user_auth = response.json['session_id'], response.json['session']['users'][1]['auth']
         expected_response = {
             'session': {
+                'secret': {
+                    'quorum': 3,
+                    'shares': 5,
+                    'sha256': None,
+                    'protocol': 'fxc1'
+                },
                 'users': [
                     {'role': 'master', 'alias': 'the session master'},
-                    {'role': 'user', 'auth': user_key, 'alias': 'a shareholder'}
+                    {'role': 'user', 'auth': user_auth, 'alias': 'a shareholder'}
                 ],
                 'ttl': 600,
-                'secret_sha256': None,
-                'alias': 'the session alias'
+                'alias': 'the session alias',
             },
             'session_id': session_id
         }
+        print(response.json)
         self.assertEqual(expected_response, response.json)
         return response.json
 
@@ -124,9 +140,7 @@ class TestSplitSession(MainTestClass):
         payload = {
             'session': {
                 'secret': {
-                    'secret': 'my awesome secret',
-                    'shares': 3,
-                    'quorum': 2
+                    'value': 'my awesome secret',
                 }
             },
             'client_alias': self.master_alias,
@@ -140,8 +154,13 @@ class TestSplitSession(MainTestClass):
             'session': {
                 'ttl': 600,
                 'alias': 'the session alias',
-                'secret': 'my awesome secret',
-                'secret_sha256': '6e1f1d4f6b6c900f3fb72466bbec4a3c7c049fc845a8751a5374227091c1f252',
+                'secret': {
+                    'quorum': 3,
+                    'shares': 5,
+                    'sha256': '6e1f1d4f6b6c900f3fb72466bbec4a3c7c049fc845a8751a5374227091c1f252',
+                    'secret': 'my awesome secret',
+                    'protocol': 'fxc1'
+                },
                 'users': [
                     {
                         'auth': self._masterkey,
@@ -169,9 +188,14 @@ class TestSplitSession(MainTestClass):
         expected_response = {
             'session_id': session_id,
             'session': {
-                'secret_sha256': '6e1f1d4f6b6c900f3fb72466bbec4a3c7c049fc845a8751a5374227091c1f252',
                 'ttl': 600,
                 'alias': 'the session alias',
+                'secret': {
+                    'quorum': 3,
+                    'shares': 5,
+                    'sha256': '6e1f1d4f6b6c900f3fb72466bbec4a3c7c049fc845a8751a5374227091c1f252',
+                    'protocol': 'fxc1'
+                },
                 'users': [
                     {
                         'alias': 'the session master',
@@ -186,12 +210,12 @@ class TestSplitSession(MainTestClass):
             }
         }
         self.assertEqual(expected_response, response.json)
+        return response.json
 
+"""
+    secret cannot be re-declared
+    
     def test_master_fail_to_put_a_secret(self):
-        """
-        shares < quorum,
-        secret == None
-        """
         joined_session = self.test_join_session()
         print('SplitSession: a master fail to put a secret where shares are less than quorum')
         session_id = joined_session['session_id']
@@ -199,8 +223,6 @@ class TestSplitSession(MainTestClass):
             'session': {
                 'secret': {
                     'secret': 'my awesome secret',
-                    'shares': 2,
-                    'quorum': 3
                 }
             },
             'client_alias': self.master_alias,
@@ -222,3 +244,4 @@ class TestSplitSession(MainTestClass):
         }
         response = self.client.put('/split/%s' % session_id, data=json.dumps(payload))
         self.assert400(response)
+"""

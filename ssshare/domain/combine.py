@@ -3,6 +3,7 @@ from enum import Enum
 from ssshare.domain.session import SharedSession
 from ssshare.control import secret_share_repository
 
+
 class CombineSessionType(Enum):
     TRANSPARENT = 'transparent'  # All users obtain the redeemed secret
     FEDERATED = 'federated'  # The users must agree to release the secret only to the session master
@@ -59,6 +60,3 @@ class CombineSession(SharedSession):
         if auth:
             res['secret'] = self._secret and self._secret.secret
         return res
-
-    def add_share_from_payload(self, share: str) -> 'CombineSession':
-        raise NotImplementedError

@@ -33,9 +33,9 @@ class CombineSessionSharedView(MethodView):
     def get(self, session_id, params=None):
         session = CombineSession.get(session_id, auth=params['auth'])
         if not session:
-            raise exceptions.DomainObjectNotFoundException
+            raise exceptions.ObjectNotFoundException
         if not session.ttl:
-            raise exceptions.DomainObjectExpiredException
+            raise exceptions.ObjectExpiredException
         return flask.jsonify(
             {
                 "session": session.to_api(auth=params['auth']),
@@ -47,7 +47,7 @@ class CombineSessionSharedView(MethodView):
     def put(self, session_id, params=None):
         session = CombineSession.get(session_id)
         if not session:
-            raise exceptions.DomainObjectNotFoundException
+            raise exceptions.ObjectNotFoundException
         user = params.get('auth') and session.get_user(params['auth'], alias=str(params['client_alias'])) \
                or session.join(params['client_alias'])
         if not user:

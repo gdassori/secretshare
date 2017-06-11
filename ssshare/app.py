@@ -30,12 +30,12 @@ def domain_object_request_not_authorized(_):
     return Response(status=401)
 
 
-@app.errorhandler(exceptions.DomainObjectNotFoundException)
+@app.errorhandler(exceptions.ObjectNotFoundException)
 def domain_object_not_found_error(_):
     return Response(status=404)
 
 
-@app.errorhandler(exceptions.DomainObjectExpiredException)
+@app.errorhandler(exceptions.ObjectExpiredException)
 def domain_object_expired_error(_):
     return Response(status=410)
 
