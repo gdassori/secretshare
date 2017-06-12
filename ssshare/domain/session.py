@@ -11,13 +11,13 @@ class SharedSession(DomainObject, metaclass=abc.ABCMeta):
     def __init__(self, master=None, alias=None, repo=None):
         self._master = master
         self._repo = repo
+        self.current_user = None
         self._uuid = None
         self._users = {}
         self._secret = None
         self._alias = alias
         self._last_update = None
         self._session_ttl = settings.SESSION_TTL
-        self._current_user = None
         self._shares = None
 
     @property
@@ -49,8 +49,10 @@ class SharedSession(DomainObject, metaclass=abc.ABCMeta):
         if not session:
             raise exceptions.ObjectNotFoundException
         i = cls.from_dict(session, repo=repo)
-        if auth and not i.get_user(auth):
-            raise exceptions.ObjectDeniedException
+        if auth:
+            if not i.get_user(auth):
+                raise exceptions.ObjectDeniedException
+            i.current_user = i.get_user(auth)
         return i
 
     @abc.abstractclassmethod
@@ -86,20 +88,19 @@ class SharedSession(DomainObject, metaclass=abc.ABCMeta):
         pass
 
     def _get_users_aliases(self) -> dict:
-        return {
+        users = {
             user.alias: [user.ROLE, user_id] for user_id, user in self._users.items()
         }
+        return users
 
     def join(self, alias: str):
         users = self._get_users_aliases()
+        if self._secret and len(users) >= self._secret.shares:
+            raise exceptions.DomainObjectBusyException
         if alias in users:
             raise exceptions.ObjectDeniedException
-        if self._secret and len(users) > self._secret.shares:
-            raise exceptions.DomainObjectBusyException
-
         user = SharedSessionUser(user_id=uuid.uuid4(), alias=alias)
         self._users[str(user.uuid)] = user
-        self._secret and self._secret.splitted and self._secret.attach_user_to_share(user)
         return user
 
     @property

@@ -16,6 +16,10 @@ class SharedSessionUser(DomainObject):
         return self.ROLE == 'master'
 
     @property
+    def is_shareholder(self):
+        return self._shareholder
+
+    @property
     def uuid(self):
         return self._uuid
 
@@ -49,12 +53,13 @@ class SharedSessionUser(DomainObject):
         )
         if self.ROLE == 'master':
             res['shareholder'] = self._shareholder
+
         if self._is_auth_valid(auth):
             res['auth'] = str(self.uuid)
             if self._session and self._session._secret and self._session._secret._splitted:
-                share = self._session._secret.get_share(res['auth'])
+                share = self._session._secret.get_share(self)
                 if share:
-                    res['share'] = share and share.value
+                    res['share'] = share.value
         return res
 
     def _is_auth_valid(self, auth: str):

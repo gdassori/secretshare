@@ -35,6 +35,10 @@ class SplitSessionSharedView(MethodView):
             raise exceptions.ObjectNotFoundException
         if not session.ttl:
             raise exceptions.ObjectExpiredException
+        if session.current_user.is_shareholder and session.secret.splitted and not \
+                session.secret.user_have_share(session.current_user):
+            session.current_user.secret.attach_user_to_share(session.current_user)
+            session.update()
         return flask.jsonify(
             {
                 "session": session.to_api(auth=params['auth']),
@@ -47,12 +51,18 @@ class SplitSessionSharedView(MethodView):
         session = SplitSession.get(session_id)
         if not session:
             raise exceptions.ObjectNotFoundException
+        if not session.ttl:
+            raise exceptions.ObjectExpiredException
+
         user = params.get('auth') and session.get_user(params['auth'], alias=str(params['client_alias'])) \
                or session.join(params['client_alias'])
         if not user:
             raise exceptions.ObjectDeniedException
+        session.current_user = user
         if user.is_master:
             session.secret.edit_secret(dict(params['session']['secret']))
+        if user.is_shareholder and session.secret.splitted and not session.secret.user_have_share(user):
+            session.secret.attach_user_to_share(user)
         session.update()
         return flask.jsonify(
             {

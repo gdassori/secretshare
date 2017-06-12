@@ -1,4 +1,5 @@
 import json
+import os
 import uuid
 from unittest.mock import create_autospec
 from ssshare.domain.secret import Share
@@ -13,7 +14,7 @@ class TestSplitSession(MainTestClass):
         self.session_alias = 'the session alias'
 
     def test_create_session(self):
-        print('SplitSession: a master create a session')
+        print('SplitSession: a master create a 3-on-5 session')
         payload = {
             "client_alias": self.master_alias,
             "session_alias": self.session_alias,
@@ -45,7 +46,7 @@ class TestSplitSession(MainTestClass):
                             'shareholder': False
                         }
                     ],
-                    'ttl': 600,
+                    'ttl': response.json['session']['ttl'],
                     'alias': 'the session alias'
                 },
                 'session_id': response.json['session_id']
@@ -101,16 +102,16 @@ class TestSplitSession(MainTestClass):
         expected_response = {
             'session': {
                 'secret': {
-                    'quorum': 3,
                     'shares': 5,
-                    'sha256': None,
-                    'protocol': 'fxc1'
+                    'quorum': 3,
+                    'protocol': 'fxc1',
+                    'sha256': None
                 },
                 'users': [
                     {'role': 'master', 'alias': 'the session master', 'shareholder': False},
                     {'role': 'user', 'auth': user_auth, 'alias': 'a shareholder'}
                 ],
-                'ttl': 600,
+                'ttl': response.json['session']['ttl'],
                 'alias': 'the session alias',
             },
             'session_id': session_id
@@ -164,7 +165,7 @@ class TestSplitSession(MainTestClass):
         self.assertTrue(is_uuid(response.json['session']['users'][1]['auth']))
         expected_response = {
             'session': {
-                'ttl': 600,
+                'ttl': response.json['session']['ttl'],
                 'alias': 'the session alias',
                 'secret': {
                     'quorum': 3,
@@ -205,7 +206,7 @@ class TestSplitSession(MainTestClass):
         expected_response = {
             'session_id': session_id,
             'session': {
-                'ttl': 600,
+                'ttl': response.json['session']['ttl'],
                 'alias': 'the session alias',
                 'secret': {
                     'quorum': 3,
@@ -231,13 +232,49 @@ class TestSplitSession(MainTestClass):
         self.assertEqual(expected_response, response.json)
         return response.json
 
-"""
-    secret cannot be re-declared
-    
-    def test_master_fail_to_put_a_secret(self):
-        joined_session = self.test_join_session()
-        print('SplitSession: a master fail to put a secret where shares are less than quorum')
-        session_id = joined_session['session_id']
+    def user_with_uuid_have_share(self, response, share_id):
+        for x in response['session']['users']:
+            if x.get('auth'):
+                if x.get('shareholder', True):
+                    self.assertEqual(x['share'], share_id)
+                    print('User with uuid {} have share_id {}'.format(x['auth'], x['share']))
+
+
+    def test_cannot_join_session_full(self):
+        alias = lambda: 'a shareholder {}'.format(str(os.urandom(2)))
+        session_with_secret = self.test_master_put_secret_on_joined_session()
+        self.user_with_uuid_have_share(session_with_secret, 'cafe01')
+        print('SplitSession: the second user join the session')
+        response = self.client.put('/split/%s' % session_with_secret['session_id'],
+                                   data=json.dumps({'client_alias' : alias()}))
+        self.assert200(response)
+        self.user_with_uuid_have_share(response.json, 'cafe02')
+        print('SplitSession: the third user join the session')
+        response = self.client.put('/split/%s' % session_with_secret['session_id'],
+                                   data=json.dumps({'client_alias' : alias()}))
+        self.assert200(response)
+        self.user_with_uuid_have_share(response.json, 'cafe03')
+        print('SplitSession: the fourth user join the session')
+        response = self.client.put('/split/%s' % session_with_secret['session_id'],
+                                   data=json.dumps({'client_alias': alias()}))
+        self.assert200(response)
+        self.user_with_uuid_have_share(response.json, 'cafe04')
+
+        print('SplitSession: the fifth user join the session')
+        response = self.client.put('/split/%s' % session_with_secret['session_id'],
+                                   data=json.dumps({'client_alias': alias()}))
+
+        self.assert200(response)
+        self.user_with_uuid_have_share(response.json, 'cafe05')
+        print('SplitSession: the sixth cannot join the session')
+        response = self.client.put('/split/%s' % session_with_secret['session_id'],
+                                   data=json.dumps({'client_alias': alias()}))
+        self.assert403(response)
+
+    def test_master_fail_to_overwrite_a_secret(self):
+        session = self.test_master_put_secret_on_joined_session()
+        print('SplitSession: a master fail to overwrite the secret')
+        session_id = session['session_id']
         payload = {
             'session': {
                 'secret': {
@@ -249,18 +286,3 @@ class TestSplitSession(MainTestClass):
         }
         response = self.client.put('/split/%s' % session_id, data=json.dumps(payload))
         self.assert400(response)
-        print('SplitSession: a master fail to put an empty secret')
-        payload = {
-            'session': {
-                'secret': {
-                    'secret': None,
-                    'shares': 5,
-                    'quorum': 3
-                }
-            },
-            'client_alias': self.master_alias,
-            'auth': self._masterkey
-        }
-        response = self.client.put('/split/%s' % session_id, data=json.dumps(payload))
-        self.assert400(response)
-"""

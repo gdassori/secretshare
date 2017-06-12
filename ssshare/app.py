@@ -29,6 +29,10 @@ def validation_error(_):
 def domain_object_request_not_authorized(_):
     return Response(status=401)
 
+@app.errorhandler(exceptions.DomainObjectBusyException)
+def domain_busy_error(_):
+    return Response(status=403)
+
 
 @app.errorhandler(exceptions.ObjectNotFoundException)
 def domain_object_not_found_error(_):

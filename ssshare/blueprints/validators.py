@@ -53,7 +53,7 @@ SplitSessionValidator = validators.struct(
         "secret": validators.struct(
             {
                 "value": validators.String,
-                "protocol": validators.maybe(SplitProtocolValidator)
+                "protocol": validators.maybe(SplitProtocolValidator),
             }
         )
     }

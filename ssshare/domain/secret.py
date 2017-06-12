@@ -36,6 +36,12 @@ class SharedSessionSecret(DomainObject):
         self._splitted = []
         self._protocol = SecretProtocol(settings.DEFAULT_SSS_PROTOCOL)
 
+    def user_have_share(self, user: SharedSessionUser):
+        for share in self._splitted:
+            if str(user.uuid) == share.user:
+                print('share {} belong to {}'.format(share.value, user.uuid))
+                return True
+
     @property
     def split_service(self):
         from ssshare.control import fxc_web_api_service
@@ -152,13 +158,13 @@ class SharedSessionSecret(DomainObject):
     def attach_user_to_share(self, user: SharedSessionUser):
         for share in self._splitted:
             if not share.user:
-                share.user = user.uuid
+                share.user = str(user.uuid)
                 _s = share
                 return _s
         raise exceptions.ObjectDeniedException
 
-    def get_share(self, user_id: str):
+    def get_share(self, user: SharedSessionUser):
         assert self._splitted
         for share in self._splitted:
-            if share.user == user_id:
+            if share.user == str(user.uuid):
                 return share
