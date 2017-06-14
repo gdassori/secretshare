@@ -58,7 +58,7 @@ class SplitSessionSharedView(MethodView):
                or session.join(params['client_alias'])
         if not user:
             raise exceptions.ObjectDeniedException
-        session.current_user = user
+        user.session = session
         if user.is_master:
             session.secret.edit_secret(dict(params['session']['secret']))
         if user.is_shareholder and session.secret.splitted and not session.secret.user_have_share(user):

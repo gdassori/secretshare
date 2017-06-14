@@ -27,6 +27,11 @@ class SharedSessionUser(DomainObject):
     def session(self):
         return self._session
 
+    @session.setter
+    def session(self, value):
+        self._session = value
+        value.current_user = self
+
     @property
     def alias(self):
         return self._alias
