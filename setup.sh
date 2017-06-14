@@ -29,16 +29,18 @@ Building FXC
     exit
   fi
   mkdir -p fxc/src ; mkdir fxc/bin
-  if [ -z $(which lein) ]; then
+  LEIN=`which lein`
+  if [[ -z $($LEIN) ]]; then
     echo "Downloading Leingen"
     cd $CURRENT_PATH/fxc/bin
     curl https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein > lein
     chmod a+x lein
+    LEIN=$CURRENT_PATH/fxc/bin/lein
   fi
   cd $CURRENT_PATH/fxc/src
   git clone https://github.com/dyne/FXC-webapi.git
   cd FXC-webapi
-  $CURRENT_PATH/fxc/bin/lein do clean, ring uberjar
+  $LEIN do clean, ring uberjar
   mv target/server.jar $CURRENT_PATH/fxc/bin/fxc-webapi.jar
   echo "FXC-webapi built"
   cd $CURRENT_PATH

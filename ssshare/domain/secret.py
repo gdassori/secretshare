@@ -8,7 +8,7 @@ from ssshare.domain.user import SharedSessionUser
 
 
 class Share():
-    def __init__(self, value, user=None):
+    def __init__(self, value: str, user=None):
         self.user = user
         self.value = value
 
@@ -39,7 +39,6 @@ class SharedSessionSecret(DomainObject):
     def user_have_share(self, user: SharedSessionUser):
         for share in self._splitted:
             if str(user.uuid) == share.user:
-                print('share {} belong to {}'.format(share.value, user.uuid))
                 return True
 
     @property
