@@ -47,20 +47,26 @@ class TestCombineSession(MainTestClass):
     def test_get_session(self):
         jsonresponse = self.test_create_session()
         print('CombineSession: a master get a created session')
-        session_id, user_key = jsonresponse['session_id'], jsonresponse['session']['users'][0]['auth']
-        response = self.client.get('/combine/%s?auth=%s' % (session_id, user_key))
+        session_id, user_key, alias = jsonresponse['session_id'], \
+                                      jsonresponse['session']['users'][0]['auth'], \
+                                      jsonresponse['session']['users'][0]['alias']
+        response = self.client.get('/combine/%s?auth=%s&client_alias=%s' % (session_id, user_key, alias))
         self.assertEqual(response.json, jsonresponse)
 
     def test_get_session_404_no_session(self):
         print('CombineSession: a get happen on a non existent session')
-        response = self.client.get('/combine/%s?auth=%s' % (str(uuid.uuid4()), str(uuid.uuid4())))
+        response = self.client.get('/combine/%s?auth=%s&client_alias=%s' % (
+            str(uuid.uuid4()), str(uuid.uuid4()), 'client_alias')
+        )
         self.assert404(response)
 
     def test_get_session_401_no_auth(self):
         jsonresponse = self.test_create_session()
         print('CombineSession: a get happen on a good session, but without rights')
         session_id, _ = jsonresponse['session_id'], jsonresponse['session']['users'][0]['auth']
-        response = self.client.get('/combine/%s?auth=%s' % (session_id, str(uuid.uuid4())))
+        response = self.client.get('/combine/%s?auth=%s&client_alias=%s' % (
+            session_id, str(uuid.uuid4()), 'user_without_rights')
+        )
         self.assert401(response)
 
     def test_get_session_410_expired(self):
@@ -74,7 +80,7 @@ class TestCombineSession(MainTestClass):
         data['last_update'] = 1 # epoch based, last update in the shiny 70s
         secret_share_repository.update_session(data)
         print('CombineSession: someone request an expired session')
-        response = self.client.get('/combine/%s?auth=%s' % (session_id, user_key))
+        response = self.client.get('/combine/%s?auth=%s&client_alias=%s' % (session_id, user_key, 'client_alias'))
         self.assertEqual(response.status_code, 410)
 
 '''

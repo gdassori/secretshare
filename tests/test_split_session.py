@@ -59,19 +59,20 @@ class TestSplitSession(MainTestClass):
         jsonresponse = self.test_create_session()
         print('SplitSession: a master get a created session')
         session_id, user_auth = jsonresponse['session_id'], jsonresponse['session']['users'][0]['auth']
-        response = self.client.get('/split/%s?auth=%s' % (session_id, user_auth))
+        response = self.client.get('/split/%s?auth=%s&client_alias=%s' % (session_id, user_auth, self.master_alias))
+        self.assert200(response)
         self.assertEqual(response.json, jsonresponse)
 
     def test_get_session_404_no_session(self):
         print('SplitSession: a get happen on a non existent session')
-        response = self.client.get('/split/%s?auth=%s' % (str(uuid.uuid4()), str(uuid.uuid4())))
+        response = self.client.get('/split/%s?auth=%s&client_alias=%s' % (str(uuid.uuid4()), str(uuid.uuid4()), 'alias'))
         self.assert404(response)
 
     def test_get_session_401_no_auth(self):
         jsonresponse = self.test_create_session()
         print('SplitSession: a get happen on a good session, but without rights')
         session_id, _ = jsonresponse['session_id'], jsonresponse['session']['users'][0]['auth']
-        response = self.client.get('/split/%s?auth=%s' % (session_id, str(uuid.uuid4())))
+        response = self.client.get('/split/%s?auth=%s&client_alias=%s' % (session_id, str(uuid.uuid4()), 'alias'))
         self.assert401(response)
 
     def test_get_session_410_expired(self):
@@ -85,7 +86,7 @@ class TestSplitSession(MainTestClass):
         data['last_update'] = 1 # epoch based, last update in the shiny 70s
         secret_share_repository.update_session(data)
         print('SplitSession: someone request an expired session')
-        response = self.client.get('/split/%s?auth=%s' % (session_id, user_key))
+        response = self.client.get('/split/%s?auth=%s&client_alias=%s' % (session_id, user_key, 'alias'))
         self.assertEqual(response.status_code, 410)
 
     def test_join_session(self):
@@ -122,7 +123,8 @@ class TestSplitSession(MainTestClass):
     def test_master_get_user_joined_session(self):
         joined_session = self.test_join_session()
         print('SplitSession: after a join, the master get the session and see the joined user')
-        response = self.client.get('/split/%s?auth=%s' % (joined_session['session_id'], self._masterkey))
+        response = self.client.get('/split/%s?auth=%s&client_alias=%s' % (
+            joined_session['session_id'], self._masterkey, self.master_alias))
         self.assert200(response)
         self.assertTrue(is_uuid(response.json['session_id']))
         self.assertTrue(is_uuid(response.json['session']['users'][1]['auth']))
@@ -201,7 +203,7 @@ class TestSplitSession(MainTestClass):
         print('SplitSession: a user is able to see the hash of the secret presented by the master')
         session_id = session_with_secret['session_id']
         user_key = session_with_secret['session']['users'][1]['auth']
-        response = self.client.get('/split/%s?auth=%s' % (session_id, user_key))
+        response = self.client.get('/split/%s?auth=%s&client_alias=%s' % (session_id, user_key, 'alias'))
         self.assert200(response)
         expected_response = {
             'session_id': session_id,

@@ -17,33 +17,36 @@ rm -rf fxc
 if [ "$1" == "--disable-fxc" ]; then
  echo "Skipping FXC Build"
 elif [ -z "$1" ]; then
- echo """
+echo """
 Building FXC
 """
-  if [ -z $(which java) ]; then
-    echo """ERROR: Java is required"""
-    exit
-  fi
-  if [ -z $(which git) ]; then
-    echo """ERROR: git is required"""
-    exit
-  fi
-  mkdir -p fxc/src ; mkdir fxc/bin
-  LEIN=`which lein`
-  if [[ -z $($LEIN) ]]; then
-    echo "Downloading Leingen"
-    cd $CURRENT_PATH/fxc/bin
-    curl https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein > lein
-    chmod a+x lein
-    LEIN=$CURRENT_PATH/fxc/bin/lein
-  fi
-  cd $CURRENT_PATH/fxc/src
-  git clone https://github.com/dyne/FXC-webapi.git
-  cd FXC-webapi
-  $LEIN do clean, ring uberjar
-  mv target/server.jar $CURRENT_PATH/fxc/bin/fxc-webapi.jar
-  echo "FXC-webapi built"
-  cd $CURRENT_PATH
+if [ -z $(which java) ]; then
+  echo """ERROR: Java is required"""
+  exit
+fi
+if [ -z $(which git) ]; then
+  echo """ERROR: git is required"""
+  exit
+fi
+echo "Creating FXC directory"
+mkdir -p fxc/src ; mkdir fxc/bin
+
+
+if [ -z $(which lein) ]; then
+  echo "Downloading Leingen"
+  cd $CURRENT_PATH/fxc/bin
+  curl https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein > lein
+  chmod a+x lein
+  LEIN=$CURRENT_PATH/fxc/bin/lein
+fi
+
+cd $CURRENT_PATH/fxc/src
+git clone https://github.com/dyne/FXC-webapi.git
+cd FXC-webapi
+$LEIN do clean, ring uberjar
+mv target/server.jar $CURRENT_PATH/fxc/bin/fxc-webapi.jar
+echo "FXC-webapi built"
+cd $CURRENT_PATH
 
 else
  echo """
