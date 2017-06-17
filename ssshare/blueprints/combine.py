@@ -62,6 +62,7 @@ class CombineSessionSharedView(MethodView):
             }
         )
 
+
 bp.add_url_rule(
     '/<string:session_id>',
     methods=['GET', 'PUT', 'POST'],

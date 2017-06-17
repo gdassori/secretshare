@@ -75,6 +75,7 @@ SplitSessionCreateValidator = validators.struct(
 
 SplitSessionGetValidator = validators.struct(
     {
+        "client_alias": validators.String,
         "auth": UUIDValidator
     },
     strict=True
@@ -114,6 +115,7 @@ CombineSessionCreateValidator = validators.struct(
 
 CombineSessionGetValidator = validators.struct(
     {
+        "client_alias": validators.String,
         "auth": UUIDValidator
     },
     strict=True
@@ -126,4 +128,27 @@ CombineSessionJoinValidator = validators.struct(
     strict=True
 )
 
-CombineSessionEditValidator = NotImplementedError
+CombineSessionPutShareValidator = validators.struct(
+    {
+        "client_alias": validators.String,
+        "auth": validators.String,
+        "share": validators.String
+    },
+    strict=True
+)
+
+CombineSessionMasterEditValidator = validators.struct(
+    {
+        "client_alias": validators.String,
+        "auth": validators.String,
+        "session_alias": validators.String,
+        "session_type": validators.String,
+    },
+    strict=True
+)
+
+CombineSessionEditValidator = validators.union(
+    CombineSessionJoinValidator,
+    CombineSessionPutShareValidator,
+    CombineSessionMasterEditValidator
+)
