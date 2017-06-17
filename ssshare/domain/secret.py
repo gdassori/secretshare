@@ -48,6 +48,13 @@ class SharedSessionSecret(DomainObject):
             SecretProtocol.FXC1: fxc_web_api_service
         }
 
+    @property
+    def combine_service(self):
+        from ssshare.control import fxc_web_api_service
+        return {
+            SecretProtocol.FXC1: fxc_web_api_service
+        }
+
     def edit_secret(self, value: dict):
         value.get('value') and self._set_secret(value['value'])
         value.get('shares') and self._set_shares(value['shares'])
@@ -167,3 +174,16 @@ class SharedSessionSecret(DomainObject):
         for share in self._splitted:
             if share.user == str(user.uuid):
                 return share
+
+    def add_share(self, share: Share):
+        if len(self._splitted) < self.shares:
+            self._splitted.append(share)
+        if len(self._splitted) >= self.quorum:
+            self.build_secret()
+        raise exceptions.DomainObjectBusyException
+
+    def build_secret(self):
+        if len(self._splitted) >= self._shares:
+            self._secret = self.combine_service[self._protocol].combine(self)
+            return
+        raise exceptions.ObjectNotFoundException
