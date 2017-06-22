@@ -4,8 +4,8 @@ from ssshare import settings, exceptions
 from ssshare.blueprints.split import bp as split_bp
 from ssshare.blueprints.combine import bp as combine_bp
 
-app = Flask(__name__)
 
+app = Flask(__name__)
 app.config.update(
     DEBUG=settings.DEBUG,
     SECRET_KEY=settings.FLASK_SECRET_KEY
@@ -42,8 +42,6 @@ def domain_object_not_found_error(_):
 @app.errorhandler(exceptions.ObjectExpiredException)
 def domain_object_expired_error(_):
     return Response(status=410)
-
-
 
 
 if __name__ == '__main__':

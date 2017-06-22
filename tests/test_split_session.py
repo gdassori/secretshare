@@ -235,11 +235,12 @@ class TestSplitSession(MainTestClass):
         return response.json
 
     def user_with_uuid_have_share(self, response, share_id):
-        for x in response['session']['users']:
+        for i, x in enumerate(response['session']['users']):
+
             if x.get('auth'):
                 if x.get('shareholder', True):
                     self.assertEqual(x['share'], share_id)
-                    print('User with uuid {} have share_id {}'.format(x['auth'], x['share']))
+                    print('User {} have share_id [ {} ]'.format(i, x['share']))
 
 
     def test_cannot_join_session_full(self):
