@@ -1,5 +1,8 @@
 import json
 import uuid
+from unittest.mock import create_autospec
+
+from ssshare.services.fxc.api import FXCWebApiService
 from tests import MainTestClass
 from ssshare.blueprints.validators import is_uuid
 
@@ -9,15 +12,15 @@ class TestCombineSession(MainTestClass):
         self.master_alias = 'the session master'
         self.session_alias = 'the session alias'
 
-    def test_create_session(self):
+    def test_create_session(self, session_type='transparent', shares=5, quorum=3):
         print('CombineSession: a master create a session')
         payload = {
             "client_alias": self.master_alias,
             "session_alias": self.session_alias,
-            "session_type": "transparent",
+            "session_type": session_type,
             "session_policies": {
-                "shares": 5,
-                "quorum": 3,
+                "shares": shares,
+                "quorum": quorum,
                 "protocol": "fxc1"
             }
         }
@@ -41,7 +44,7 @@ class TestCombineSession(MainTestClass):
                     'secret_sha256': None,
                     'ttl': response.json['session']['ttl'],
                     'alias': 'the session alias',
-                    'type': 'transparent'
+                    'type': session_type
                 },
                 'session_id': response.json['session_id']
              },
@@ -88,18 +91,55 @@ class TestCombineSession(MainTestClass):
         response = self.client.get('/combine/%s?auth=%s&client_alias=%s' % (session_id, user_key, 'client_alias'))
         self.assertEqual(response.status_code, 410)
 
-    def test_put_share(self):
-        jsonresponse = self.test_create_session()
+    def test_put_share(self, session_type='transparent', shares=5, quorum=3):
+        jsonresponse = self.test_create_session(session_type=session_type, shares=shares, quorum=quorum)
         alias, session_id, user_key = jsonresponse['session']['users'][0]['alias'], \
                                       jsonresponse['session_id'], \
                                       jsonresponse['session']['users'][0]['auth']
         payload = {
-            'client_alias': 'peter',
-            'share': 'thebirdistheword'
+            'client_alias': 'case',
+            'share': 'cafe01'
         }
-        subscribe1 = self.client.put('/combine/%s' % session_id, data=json.dumps(payload))
-        self.assert200(subscribe1)
-        self.assertEqual(subscribe1.json['session']['users'][1]['alias'], 'peter')
-        self.assertEqual(subscribe1.json['session']['users'][1]['share'], 'thebirdistheword')
+        response = self.client.put('/combine/%s' % session_id, data=json.dumps(payload))
+        self.assert200(response)
+        self.user_with_uuid_have_share(response.json, 'cafe01')
+        self.assertEqual(response.json['session']['users'][1]['alias'], 'case')
         print('CombineSession: a client join a combine session and present its share')
-        return subscribe1
+        return response.json
+
+    def _test_combine(self, combine_type='transparent'):
+        jsonresponse = self.test_put_share(session_type=combine_type)
+        session_id = jsonresponse['session_id']
+        payload = {
+            'client_alias': 'molly',
+            'share': 'cafe02'
+        }
+        subscribe2 = self.client.put('/combine/%s' % session_id, data=json.dumps(payload))
+        print(subscribe2.json)
+        self.assert200(subscribe2)
+        self.assertEqual(subscribe2.json['session']['users'][2]['alias'], 'molly')
+        self.user_with_uuid_have_share(subscribe2.json, 'cafe02')
+        print('CombineSession: the second client join a combine session and present its share')
+        payload = {
+            'client_alias': 'armitage',
+            'share': 'cafe03'
+        }
+        from ssshare import control
+        control.fxc_web_api_service = create_autospec(FXCWebApiService)
+        control.fxc_web_api_service.combine.return_value = 'secret'
+        subscribe3 = self.client.put('/combine/%s' % session_id, data=json.dumps(payload))
+        self.assert200(subscribe3)
+        self.user_with_uuid_have_share(subscribe3.json, 'cafe03')
+        self.assertEqual(subscribe3.json['session']['users'][3]['alias'], 'armitage')
+        self.assertEqual(subscribe3.json['session']['secret'], 'secret')
+        print('CombineSession: the second client join a combine session and present its share')
+        return subscribe3.json
+
+
+    def test_transparent_combine(self):
+        res = self._test_combine()
+        self.assertEqual(res['session']['secret'], 'secret')
+
+    def test_federated_combine(self):
+        res = self._test_combine(combine_type='federated')
+        self.assertEqual(res['session']['secret'], None)

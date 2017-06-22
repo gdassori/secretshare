@@ -184,7 +184,7 @@ class SharedSessionSecret(DomainObject):
         return self
 
     def build_secret(self):
-        if len(self._splitted) >= self._shares:
+        if len(self._splitted) >= self._quorum:
             self._secret = self.combine_service[self._protocol].combine(self)
             return
         raise exceptions.ObjectNotFoundException

@@ -34,7 +34,7 @@ class SplitSession(SharedSession):
         i._master = data.get('master') and SharedSessionMaster.from_dict(data['master'], session=i)
         i._last_update = data['last_update']
         i._alias = data['alias']
-        i._users = {u['uuid']: SharedSessionUser.from_dict(u, session=i) for u in data['users']}
+        i._users = [SharedSessionUser.from_dict(u, session=i) for u in data['users']]
         i._secret = data['secret'] and SharedSessionSecret.from_dict(data['secret'])
         i._secret._session = i._secret and i
         return i

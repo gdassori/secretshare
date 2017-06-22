@@ -13,7 +13,7 @@ class SharedSession(DomainObject, metaclass=abc.ABCMeta):
         self._repo = repo
         self.current_user = None
         self._uuid = None
-        self._users = {}
+        self._users = []
         self._secret = None
         self._alias = alias
         self._last_update = None
@@ -24,8 +24,13 @@ class SharedSession(DomainObject, metaclass=abc.ABCMeta):
     def master(self):
         return self._master
 
+    def _get_user(self, user_id):
+        for user in self._users:
+            if user_id == isinstance(user_id, uuid.UUID) and str(user.uuid) or user.uuid:
+                return user
+
     def get_user(self, user_id: str, alias: str = None):
-        user = uuid.UUID(user_id) == self.master.uuid and self.master or self._users.get(user_id, None)
+        user = uuid.UUID(user_id) == self.master.uuid and self.master or self._get_user(user_id)
         return alias is not None and user and user.alias == alias and user or user
 
     @abc.abstractclassmethod
@@ -34,7 +39,7 @@ class SharedSession(DomainObject, metaclass=abc.ABCMeta):
 
     @property
     def users(self):
-        return list(self._users.values())
+        return self._users
 
     @property
     def ttl(self):
@@ -89,7 +94,7 @@ class SharedSession(DomainObject, metaclass=abc.ABCMeta):
 
     def _get_users_aliases(self) -> dict:
         users = {
-            user.alias: [user.ROLE, user_id] for user_id, user in self._users.items()
+            user.alias: [user.ROLE, user.uuid] for user in self._users
         }
         return users
 
@@ -100,7 +105,7 @@ class SharedSession(DomainObject, metaclass=abc.ABCMeta):
         if alias in users:
             raise exceptions.ObjectDeniedException
         user = SharedSessionUser(user_id=uuid.uuid4(), alias=alias)
-        self._users[str(user.uuid)] = user
+        self._users.append(user)
         return user
 
     @property
