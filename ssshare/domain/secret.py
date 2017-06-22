@@ -95,7 +95,7 @@ class SharedSessionSecret(DomainObject):
             session: SplitSession = None,
             shares: int = 5,
             quorum: int = 3,
-            protocol=None
+            protocol=None,
             ):
         i = cls()
         i._session = session
@@ -130,7 +130,7 @@ class SharedSessionSecret(DomainObject):
 
     @property
     def splitted(self):
-        if not self.secret:
+        if not self._secret and not self._splitted:
             return []
         return self._splitted or self._split()
 
@@ -176,11 +176,12 @@ class SharedSessionSecret(DomainObject):
                 return share
 
     def add_share(self, share: Share):
-        if len(self._splitted) < self.shares:
-            self._splitted.append(share)
-        if len(self._splitted) >= self.quorum:
+        if len(self.splitted) > self.shares:
+            raise exceptions.DomainObjectBusyException
+        self._splitted.append(share)
+        if len(self.splitted) >= self.quorum:
             self.build_secret()
-        raise exceptions.DomainObjectBusyException
+        return self
 
     def build_secret(self):
         if len(self._splitted) >= self._shares:

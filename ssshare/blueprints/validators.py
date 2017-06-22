@@ -108,7 +108,13 @@ CombineSessionCreateValidator = validators.struct(
         "client_alias": validators.String,
         "session_alias": validators.String,
         "session_type": validators.String,
-        "session_id": validators.maybe(UUIDValidator)
+        "session_id": validators.maybe(UUIDValidator),
+        "session_policies": validators.struct(
+            {
+                "quorum": validators.Int,
+                "shares": validators.Int
+            }
+        )
     },
     strict=True
 )
@@ -131,7 +137,7 @@ CombineSessionJoinValidator = validators.struct(
 CombineSessionPutShareValidator = validators.struct(
     {
         "client_alias": validators.String,
-        "auth": validators.String,
+        "auth": validators.maybe(validators.String),
         "share": validators.String
     },
     strict=True

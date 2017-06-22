@@ -61,8 +61,9 @@ class SharedSessionUser(DomainObject):
 
         if self._is_auth_valid(auth):
             res['auth'] = str(self.uuid)
-            if self._session and self._session._secret and self._session._secret._splitted:
-                share = self._session._secret.get_share(self)
+            secret = self.session and self.session.secret or None
+            if secret and secret.splitted:
+                share = secret.get_share(self)
                 if share:
                     res['share'] = share.value
         return res

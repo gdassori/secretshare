@@ -4,7 +4,7 @@ from ssshare import exceptions
 from ssshare.blueprints import validators
 from ssshare.domain.combine import CombineSession
 from ssshare.domain.master import SharedSessionMaster
-from ssshare.domain.secret import Share
+from ssshare.domain.secret import Share, SharedSessionSecret
 
 bp = flask.Blueprint('combine', __name__)
 
@@ -15,11 +15,17 @@ class CombineSessionCreateView(MethodView):
         user = SharedSessionMaster.new(
             alias=params['client_alias']
         )
+        secret = SharedSessionSecret.new(
+            shares=params['session_policies']['shares'],
+            quorum=params['session_policies']['quorum'],
+            protocol=params['session_policies']['protocol']
+        )
         session = CombineSession.new(
             session_id=params.get('session_id'),
             master=user,
             alias=params['session_alias'],
-            session_type=params['session_type']
+            session_type=params['session_type'],
+            secret=secret
         ).store()
         return flask.jsonify(
             {
@@ -53,8 +59,9 @@ class CombineSessionSharedView(MethodView):
                or session.join(params['client_alias'])
         if not user:
             raise exceptions.ObjectDeniedException
+        user.session = session
         if params.get('share'):
-            session.secret.add_share(Share(params['share'], user))
+            session.secret.add_share(Share(params['share'], str(user.uuid)))
         session.update()
         return flask.jsonify(
             {

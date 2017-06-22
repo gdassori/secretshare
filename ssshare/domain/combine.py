@@ -15,9 +15,10 @@ class CombineSession(SharedSession):
         self._type = session_type
 
     @classmethod
-    def new(cls, session_id=None, master=None, alias=None, session_type=None, repo=secret_share_repository):
+    def new(cls, session_id=None, master=None, alias=None, session_type=None, secret=None, repo=secret_share_repository):
         _type = CombineSessionType(session_type)
         i = cls(master=master, alias=alias, repo=repo, session_type=_type)
+        i._secret = secret
         if session_id:
             i._uuid = uuid.UUID(session_id)
         return i
