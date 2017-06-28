@@ -147,7 +147,7 @@ class SharedSessionSecret(DomainObject):
         return (
             (
                 (self._session.master and auth == str(self._session.master.uuid)) or
-                (self._session.session_type == CombineSessionType.TRANSPARENT)
+                (self._session.subtype == CombineSessionType.TRANSPARENT)
             )
         )
 

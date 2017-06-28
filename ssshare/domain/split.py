@@ -12,13 +12,15 @@ class SplitSessionType(Enum):
 
 
 class SplitSession(SharedSession):
+    TYPE = 'split'
+    subtypes = SplitSessionType
     def __init__(self, master: SharedSessionMaster=None, alias=None, repo=secret_share_repository):
         super().__init__(master=master, alias=alias, repo=repo)
-        self._type = None
+        self._subtype = None
 
     @property
-    def session_type(self):
-        return self._type
+    def subtype(self):
+        return self._subtype
 
     @classmethod
     def new(cls, master=None, alias=None, policies=None, repo=secret_share_repository):
@@ -34,7 +36,9 @@ class SplitSession(SharedSession):
             last_update=self._last_update,
             alias=self._alias,
             users=[u.to_dict() for u in self.users],
-            secret=self._secret and self._secret.to_dict()
+            secret=self._secret and self._secret.to_dict(),
+            type=self.TYPE,
+            subtype=self.subtype and self.subtype.value
         )
 
     @classmethod
@@ -47,6 +51,7 @@ class SplitSession(SharedSession):
         i._master = data.get('master') and SharedSessionMaster.from_dict(data['master'], session=i)
         i._last_update = data['last_update']
         i._alias = data['alias']
+        i._subtype = data['subtype']
         i._users = [SharedSessionUser.from_dict(u, session=i) for u in data['users']]
         i._secret = data['secret'] and SharedSessionSecret.from_dict(data['secret'])
         i._secret._session = i._secret and i
@@ -58,8 +63,9 @@ class SplitSession(SharedSession):
             'ttl': self.ttl,
             'users': users,
             'alias': self._alias,
-            'secret': self._secret and self._secret.to_api(auth)
+            'secret': self._secret and self._secret.to_api(auth),
         }
+        # TODO 'subtype'
 
     @property
     def secret(self):

@@ -80,7 +80,7 @@ class TestSplitSession(MainTestClass):
         # force session expiration
         print('SplitSession: the session expires')
         from ssshare.control import secret_share_repository
-        data = secret_share_repository.get_session(session_id)
+        data = secret_share_repository.get_session('split/{}'.format(session_id))
         data['last_update'] = 1 # epoch based, last update in the shiny 70s
         secret_share_repository.update_session(data)
         print('SplitSession: someone request an expired session')

@@ -47,7 +47,7 @@ class TestCombineSession(MainTestClass):
                     ],
                     'ttl': response.json['session']['ttl'],
                     'alias': 'the session alias',
-                    'type': session_type
+                    'subtype': session_type
                 },
                 'session_id': response.json['session_id']
              },
@@ -87,7 +87,7 @@ class TestCombineSession(MainTestClass):
         # force session expiration
         print('CombineSession: the session expires')
         from ssshare.control import secret_share_repository
-        data = secret_share_repository.get_session(session_id)
+        data = secret_share_repository.get_session('combine/{}'.format(session_id))
         data['last_update'] = 1 # epoch based, last update in the shiny 70s
         secret_share_repository.update_session(data)
         print('CombineSession: someone request an expired session')
@@ -166,12 +166,12 @@ class TestCombineSession(MainTestClass):
                     'protocol': 'fxc1',
                     'secret': 'secret'
                 },
-                'type': 'federated'
+                'subtype': 'federated'
             }
         }
         self.assertEqual(expected_master_res['session']['alias'], master_res.json['session']['alias'])
         self.assertEqual(expected_master_res['session']['secret'], master_res.json['session']['secret'])
-        self.assertEqual(expected_master_res['session']['type'], master_res.json['session']['type'])
+        self.assertEqual(expected_master_res['session']['subtype'], master_res.json['session']['subtype'])
         self.assertEqual(4, len(master_res.json['session']['users']))
 
 

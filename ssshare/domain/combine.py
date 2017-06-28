@@ -10,10 +10,11 @@ class CombineSessionType(Enum):
 
 
 class CombineSession(SharedSession):
-    types = CombineSessionType
+    TYPE = 'combine'
+    subtypes = CombineSessionType
     def __init__(self, master=None, alias=None, session_type=None, repo=secret_share_repository):
         super().__init__(master=master, alias=alias, repo=repo)
-        self._type = session_type
+        self._subtype = session_type
 
     @classmethod
     def new(cls, session_id=None, master=None, alias=None, session_type=None, secret=None, repo=secret_share_repository):
@@ -25,8 +26,8 @@ class CombineSession(SharedSession):
         return i
 
     @property
-    def session_type(self):
-        return self._type
+    def subtype(self):
+        return self._subtype
 
     def to_dict(self) -> dict:
         return dict(
@@ -35,8 +36,9 @@ class CombineSession(SharedSession):
             alias=self._alias,
             users=[u.to_dict() for u in self.users],
             secret=self._secret and self._secret.to_dict(),
-            type=self._type.value,
-            master=self._master and self._master.to_dict()
+            master=self._master and self._master.to_dict(),
+            type=self.TYPE,
+            subtype=self.subtype and self.subtype.value
         )
 
     @classmethod
@@ -52,7 +54,7 @@ class CombineSession(SharedSession):
         i._users = [SharedSessionUser.from_dict(u, session=i) for u in data['users']]
         i._secret = data['secret'] and SharedSessionSecret.from_dict(data['secret'])
         i._secret._session = i
-        i._type = CombineSessionType(data['type'])
+        i._subtype = CombineSessionType(data['subtype'])
         return i
 
     def to_api(self, auth=None):
@@ -61,7 +63,7 @@ class CombineSession(SharedSession):
             'ttl': self.ttl,
             'users': users,
             'alias': self._alias,
-            'type': self._type.value
+            'subtype': self._subtype.value
         }
         if auth:
             res['secret'] = self._secret and self._secret.to_api(auth=auth)

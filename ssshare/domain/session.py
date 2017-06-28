@@ -8,6 +8,8 @@ from ssshare.domain.user import SharedSessionUser
 
 
 class SharedSession(DomainObject, metaclass=abc.ABCMeta):
+    TYPE = NotImplementedError
+
     def __init__(self, master=None, alias=None, repo=None):
         self._master = master
         self._repo = repo
@@ -22,7 +24,7 @@ class SharedSession(DomainObject, metaclass=abc.ABCMeta):
 
     @property
     @abc.abstractmethod
-    def session_type(self):
+    def subtype(self):
         pass
 
     @property
@@ -55,7 +57,7 @@ class SharedSession(DomainObject, metaclass=abc.ABCMeta):
 
     @classmethod
     def get(cls, session_id: str, auth: str=None, repo=secret_share_repository) -> 'SharedSession':
-        session = repo.get_session(session_id)
+        session = repo.get_session('{}/{}'.format(cls.TYPE, session_id))
         if not session:
             raise exceptions.ObjectNotFoundException
         i = cls.from_dict(session, repo=repo)
