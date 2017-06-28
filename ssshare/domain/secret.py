@@ -3,7 +3,8 @@ from hashlib import sha256
 
 from ssshare import exceptions, settings
 from ssshare.domain import DomainObject
-from ssshare.domain.split import SplitSession
+from ssshare.domain.combine import CombineSessionType
+from ssshare.domain.split import SplitSession, SplitSessionType
 from ssshare.domain.user import SharedSessionUser
 
 
@@ -142,15 +143,24 @@ class SharedSessionSecret(DomainObject):
         assert not self.secret
         raise NotImplementedError
 
+    def _is_auth_for_secret(self, auth):
+        return (
+            (
+                (self._session.master and auth == str(self._session.master.uuid)) or
+                (self._session.session_type == CombineSessionType.TRANSPARENT)
+            )
+        )
+
     def to_api(self, auth=None):
         res = {
             'quorum': self._quorum,
             'shares': self._shares,
-            'sha256': self.sha256,
             'protocol': self._protocol.value
         }
-        if self._session and auth and self._session.master and auth == str(self._session.master.uuid):
-            res['secret'] = self._secret
+        if self._secret:
+            res['sha256'] = self.sha256
+            if self._session and auth and self._is_auth_for_secret(auth):
+                res['secret'] = self._secret
         return res
 
     def _split(self):

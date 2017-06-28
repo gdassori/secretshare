@@ -21,6 +21,11 @@ class SharedSession(DomainObject, metaclass=abc.ABCMeta):
         self._shares = None
 
     @property
+    @abc.abstractmethod
+    def session_type(self):
+        pass
+
+    @property
     def master(self):
         return self._master
 

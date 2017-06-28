@@ -34,8 +34,6 @@ class TestSplitSession(MainTestClass):
                     'secret': {
                         'quorum': 3,
                         'shares': 5,
-                        'sha256': None,
-                        'secret': None,
                         'protocol': 'fxc1'
                     },
                     'users': [
@@ -106,7 +104,6 @@ class TestSplitSession(MainTestClass):
                     'shares': 5,
                     'quorum': 3,
                     'protocol': 'fxc1',
-                    'sha256': None
                 },
                 'users': [
                     {'role': 'master', 'alias': 'the session master', 'shareholder': False},

@@ -1,11 +1,24 @@
+from enum import Enum
+
 from ssshare.domain.master import SharedSessionMaster
 from ssshare.domain.session import SharedSession
 from ssshare.control import secret_share_repository
 
 
+class SplitSessionType(Enum):
+    # draft
+    PRIVATE = 'private'
+    AUDITABLE = 'auditable'
+
+
 class SplitSession(SharedSession):
     def __init__(self, master: SharedSessionMaster=None, alias=None, repo=secret_share_repository):
         super().__init__(master=master, alias=alias, repo=repo)
+        self._type = None
+
+    @property
+    def session_type(self):
+        return self._type
 
     @classmethod
     def new(cls, master=None, alias=None, policies=None, repo=secret_share_repository):

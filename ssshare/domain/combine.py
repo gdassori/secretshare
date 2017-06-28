@@ -10,6 +10,7 @@ class CombineSessionType(Enum):
 
 
 class CombineSession(SharedSession):
+    types = CombineSessionType
     def __init__(self, master=None, alias=None, session_type=None, repo=secret_share_repository):
         super().__init__(master=master, alias=alias, repo=repo)
         self._type = session_type
@@ -22,6 +23,10 @@ class CombineSession(SharedSession):
         if session_id:
             i._uuid = uuid.UUID(session_id)
         return i
+
+    @property
+    def session_type(self):
+        return self._type
 
     def to_dict(self) -> dict:
         return dict(
@@ -46,6 +51,7 @@ class CombineSession(SharedSession):
         i._alias = data['alias']
         i._users = [SharedSessionUser.from_dict(u, session=i) for u in data['users']]
         i._secret = data['secret'] and SharedSessionSecret.from_dict(data['secret'])
+        i._secret._session = i
         i._type = CombineSessionType(data['type'])
         return i
 
@@ -54,7 +60,6 @@ class CombineSession(SharedSession):
         res = {
             'ttl': self.ttl,
             'users': users,
-            'secret_sha256': self._secret and self._secret.sha256,
             'alias': self._alias,
             'type': self._type.value
         }

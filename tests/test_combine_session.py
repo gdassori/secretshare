@@ -32,7 +32,11 @@ class TestCombineSession(MainTestClass):
         self.assertEqual(
             {
                 'session': {
-                    'secret': None,
+                    'secret': {
+                        'protocol': 'fxc1',
+                        'quorum': 3,
+                        'shares': 5
+                               },
                     'users': [
                         {
                             'alias': 'the session master',
@@ -41,7 +45,6 @@ class TestCombineSession(MainTestClass):
                             'shareholder': False
                         }
                     ],
-                    'secret_sha256': None,
                     'ttl': response.json['session']['ttl'],
                     'alias': 'the session alias',
                     'type': session_type
@@ -131,15 +134,44 @@ class TestCombineSession(MainTestClass):
         self.assert200(subscribe3)
         self.user_with_uuid_have_share(subscribe3.json, 'cafe03')
         self.assertEqual(subscribe3.json['session']['users'][3]['alias'], 'armitage')
-        self.assertEqual(subscribe3.json['session']['secret'], 'secret')
-        print('CombineSession: the second client join a combine session and present its share')
+        expected_secret = {
+            'protocol': 'fxc1',
+            'quorum': 3,
+            'sha256': '2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b',
+            'shares': 5,
+        }
+        if combine_type == 'transparent':
+            expected_secret['secret'] = 'secret'
+
+        self.assertEqual(subscribe3.json['session']['secret'], expected_secret)
+        print('CombineSession: the third client join a combine session and present its share')
         return subscribe3.json
 
 
     def test_transparent_combine(self):
-        res = self._test_combine()
-        self.assertEqual(res['session']['secret'], 'secret')
+        self._test_combine()
 
     def test_federated_combine(self):
         res = self._test_combine(combine_type='federated')
-        self.assertEqual(res['session']['secret'], None)
+        res['session']['secret']['secret'] = 'secret'
+        master_res = self.client.get('/combine/%s?auth=%s&client_alias=%s' % (res['session_id'], self._masterkey, self.master_alias))
+        expected_master_res = {
+            'session_id': res['session_id'],
+            'session': {
+                'alias': 'the session alias',
+                'secret': {
+                    'shares': 5,
+                    'quorum': 3,
+                    'sha256': '2bb80d537b1da3e38bd30361aa855686bde0eacd7162fef6a25fe97bf527a25b',
+                    'protocol': 'fxc1',
+                    'secret': 'secret'
+                },
+                'type': 'federated'
+            }
+        }
+        self.assertEqual(expected_master_res['session']['alias'], master_res.json['session']['alias'])
+        self.assertEqual(expected_master_res['session']['secret'], master_res.json['session']['secret'])
+        self.assertEqual(expected_master_res['session']['type'], master_res.json['session']['type'])
+        self.assertEqual(4, len(master_res.json['session']['users']))
+
+
