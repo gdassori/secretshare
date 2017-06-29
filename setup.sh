@@ -38,6 +38,8 @@ if [ -z $(which lein) ]; then
   curl https://raw.githubusercontent.com/technomancy/leiningen/stable/bin/lein > lein
   chmod a+x lein
   LEIN=$CURRENT_PATH/fxc/bin/lein
+else
+  LEIN=$(which lein)
 fi
 
 cd $CURRENT_PATH/fxc/src
