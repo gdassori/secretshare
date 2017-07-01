@@ -138,13 +138,7 @@ class TestSplitSession(MainTestClass):
     def test_master_put_secret_on_joined_session(self):
         from ssshare import control
         control.fxc_web_api_service = create_autospec(FXCWebApiService)
-        shares = [
-            Share(value='cafe01'),
-            Share(value='cafe02'),
-            Share(value='cafe03'),
-            Share(value='cafe04'),
-            Share(value='cafe05')
-        ]
+        shares = ['cafe01', 'cafe02', 'cafe03', 'cafe04', 'cafe05']
         control.fxc_web_api_service.split.return_value = shares
         joined_session = self.test_join_session()
         print('SplitSession: a master is able to put a secret and its rules into a session')
@@ -192,7 +186,6 @@ class TestSplitSession(MainTestClass):
         }
         self.assertEqual(expected_response, response.json)
         self.assertTrue(control.fxc_web_api_service.split.called)
-        self.assertEqual(shares[0].user, response.json['session']['users'][1]['auth'])
         return response.json
 
     def test_user_get_session_with_secret(self):

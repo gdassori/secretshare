@@ -4,7 +4,7 @@ from hashlib import sha256
 from ssshare import exceptions, settings
 from ssshare.domain import DomainObject
 from ssshare.domain.combine import CombineSessionType
-from ssshare.domain.split import SplitSession, SplitSessionType
+from ssshare.domain.split import SplitSession
 from ssshare.domain.user import SharedSessionUser
 
 
@@ -67,7 +67,6 @@ class SharedSessionSecret(DomainObject):
         if self._secret:
             raise exceptions.ObjectDeniedException
         self._secret = secret
-        self._split()
 
     def _set_shares(self, shares: int):
         if shares < len(self._session.users):
@@ -133,15 +132,18 @@ class SharedSessionSecret(DomainObject):
     def splitted(self):
         if not self._secret and not self._splitted:
             return []
-        return self._splitted or self._split()
+        return self._splitted or self._split() and self._splitted
 
     @property
     def secret(self):
-        return self._secret
+        return self._secret or self._combine()
 
-    def combine(self):
-        assert not self.secret
-        raise NotImplementedError
+    def _combine(self):
+        assert not self._secret
+        if self._splitted and len(self._splitted) >= self.shares:
+            raw_shares = [share.value for share in self._splitted]
+            self._secret = self.combine_service[self._protocol].combine(raw_shares, self.quorum, self.shares)
+            return self._secret
 
     def _is_auth_for_secret(self, auth):
         return (
@@ -165,11 +167,12 @@ class SharedSessionSecret(DomainObject):
 
     def _split(self):
         assert self._secret
-        shares = self.split_service[self._protocol].split(self)
+        raw_shares = self.split_service[self._protocol].split(self._secret, self.quorum, self.shares)
+        shares = [Share(value=share) for share in raw_shares]
         for i, user in enumerate(self._session.users):
             shares[i].user = str(user.uuid)
         self._splitted = shares
-        return self._splitted
+        return self
 
     def attach_user_to_share(self, user: SharedSessionUser):
         for share in self._splitted:
@@ -195,6 +198,6 @@ class SharedSessionSecret(DomainObject):
 
     def build_secret(self):
         if len(self._splitted) >= self._quorum:
-            self._secret = self.combine_service[self._protocol].combine(self)
+            self._secret = self.combine_service[self._protocol].combine(self, self.quorum, self.shares)
             return
         raise exceptions.ObjectNotFoundException

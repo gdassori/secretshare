@@ -1,6 +1,6 @@
 DEBUG = True
 FLASK_SECRET_KEY = b'change_me'
-FXC_API_URL = NotImplementedError
+FXC_API_URL = 'http://localhost:3000'
 DEFAULT_SSS_PROTOCOL = 'fxc1'
 LISTEN_HOSTNAME = 'localhost'
 LISTEN_PORT = 5000
